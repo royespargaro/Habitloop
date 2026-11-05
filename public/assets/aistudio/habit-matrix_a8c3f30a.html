@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>habitloop</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:#000}
+body{background:#000;color:#fff;margin:0;font-family:'Inter Tight','Helvetica Neue',Arial,sans-serif;font-size:15px;-webkit-tap-highlight-color:transparent}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 40% at 6% 100%,rgba(255,106,0,.20),transparent 70%),radial-gradient(55% 45% at 100% 0%,rgba(30,70,200,.24),transparent 70%)}
+body::after{content:'';position:fixed;inset:0;z-index:70;pointer-events:none;opacity:.055;mix-blend-mode:screen;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.head{font-family:'Inter Tight','Helvetica Neue',Arial,sans-serif;font-weight:400;letter-spacing:-.04em;text-transform:lowercase}
+.head b,.num{font-weight:800}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace}
+.lbl{font-size:12px;letter-spacing:.05em;text-transform:lowercase;color:#b3b8c2}
+.dim{color:#b3b8c2}
+.bd{border:1px solid #2a2a30;background:rgba(0,0,0,.62);backdrop-filter:blur(6px)}
+.btn{border:1px solid rgba(255,255,255,.5);padding:9px 14px;font-size:13px;letter-spacing:.03em;text-transform:lowercase;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;transition:background .1s,color .1s}
+.btn:hover{background:#fff;color:#000}
+.btn.solid{background:#d4ff3a;border-color:#d4ff3a;color:#000;font-weight:600}
+.btn.solid:hover{background:#fff;border-color:#fff}
+.cell{display:block;width:32px;height:32px;border:1px solid #2a2a30;background:rgba(0,0,0,.4);cursor:pointer;padding:0;transition:background .08s}
+.cell:hover{border-color:#999}
+.cell.on{background:#fff;border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.35)}
+th.today{color:#000;background:#d4ff3a}
+td.name,th.name{position:sticky;left:0;z-index:2;background:#000;border-right:1px solid #2a2a30}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.scroll::-webkit-scrollbar{height:6px}.scroll::-webkit-scrollbar-thumb{background:#444}
+.bar{height:6px;background:#1c1c20}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#ff6a00,#fff)}
+input.f{width:100%;background:#000;border:1px solid #444;color:#fff;padding:10px 12px;font-family:inherit;font-size:16px;border-radius:0;outline:none}
+input.f:focus{border-color:#fff}
+#modal{display:none}#modal.open{display:flex}
+/* film still */
+.film{position:absolute;inset:0;background:linear-gradient(180deg,#04060c 0%,#0b1636 40%,#2a1208 76%,#080403 100%)}
+.film i{position:absolute;display:block;border-radius:999px;filter:blur(9px);mix-blend-mode:screen;animation:drift 16s ease-in-out infinite alternate}
+.s1{left:6%;top:60%;width:46%;height:16px;background:linear-gradient(90deg,transparent,#ff6a00 40%,#ffd9a0 60%,transparent);transform:rotate(-6deg)}
+.s2{left:30%;top:68%;width:52%;height:12px;background:linear-gradient(90deg,transparent,#ff3d1f 45%,#ff9a3c 70%,transparent);transform:rotate(-3deg);animation-delay:-4s!important}
+.s3{left:-4%;top:77%;width:42%;height:22px;background:linear-gradient(90deg,transparent,#ff8a2a 50%,transparent);transform:rotate(-9deg);animation-delay:-8s!important}
+.s4{right:4%;top:55%;width:30%;height:10px;background:linear-gradient(90deg,transparent,#5b8cff 50%,transparent);animation-delay:-6s!important}
+.film i.bk{width:80px;height:80px;filter:blur(16px);background:radial-gradient(circle,rgba(255,150,60,.5),transparent 70%)}
+.film i.fx{animation:none;filter:none;mix-blend-mode:normal;border-radius:0}
+.flare{left:8%;top:46%;width:84%;height:2px;background:linear-gradient(90deg,transparent,#8fb4ff,transparent);box-shadow:0 0 28px 6px rgba(90,140,255,.45);mix-blend-mode:screen!important}
+.vig{inset:0;background:radial-gradient(120% 90% at 50% 55%,transparent 35%,rgba(0,0,0,.85) 100%)}
+.scrim{left:0;right:0;bottom:0;height:62%;background:linear-gradient(transparent,rgba(0,0,0,.8))}
+@keyframes drift{from{translate:-3% 0}to{translate:4% 0}}
+@media(prefers-reduced-motion:reduce){.film i{animation:none}}
+.lb{position:relative;z-index:10;background:#000;height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font:12px 'JetBrains Mono',ui-monospace,Menlo,monospace;color:#e2e5ea;letter-spacing:.05em}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="loop" viewBox="0 0 24 24"><path d="M12 12c-2-3-4-4.5-6-4.5a4.5 4.5 0 000 9c2 0 4-1.5 6-4.5s4-4.5 6-4.5a4.5 4.5 0 010 9c-2 0-4-1.5-6-4.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+<div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+
+  <header class="flex items-center justify-between py-4 border-b border-[#2a2a30]">
+    <div class="flex items-center gap-2"><svg class="w-8 h-8"><use href="#loop"/></svg><span class="head text-2xl">habit<b>loop</b></span></div>
+    <div class="flex gap-2">
+      <button class="btn" id="prev" aria-label="Previous month">←</button>
+      <button class="btn" id="next" aria-label="Next month">→</button>
+      <button class="btn solid" id="manage">habits +</button>
+    </div>
+  </header>
+
+  <!-- Film still -->
+  <section class="pt-6 sm:pt-8">
+    <div class="bd relative overflow-hidden flex flex-col" style="min-height:360px">
+      <div class="film" aria-hidden="true">
+        <i class="s1"></i><i class="s2"></i><i class="s3"></i><i class="s4"></i>
+        <i class="bk" style="left:62%;top:30%"></i><i class="bk" style="left:18%;top:38%;width:56px;height:56px"></i><i class="bk" style="left:80%;top:62%;width:60px;height:60px"></i>
+        <i class="fx flare"></i><i class="fx vig"></i><i class="fx scrim"></i>
+      </div>
+      <div class="lb"><span><span style="color:#ff5a4a">●</span> rec · habit reel</span><span>35mm · 24fps · iso 800</span></div>
+      <div class="relative z-10 flex-1 flex flex-col justify-end px-4 sm:px-8 pb-6 sm:pb-8">
+        <div class="hidden sm:block absolute right-8 top-6 px-3 py-2 text-[13px] font-semibold leading-snug" style="background:#d4ff3a;color:#000;transform:rotate(-4deg)">✦ habits<br>✦ consistency<br>✦ focus</div>
+        <div class="text-[13px] mb-2" style="color:#e2e5ea;text-shadow:0 1px 8px #000">overview — monthly log</div>
+        <h1 id="title" class="head text-6xl sm:text-9xl leading-none" style="text-shadow:0 2px 28px rgba(0,0,0,.75)"></h1>
+      </div>
+      <div class="lb"><span>scene: monthly log</span><span id="frameInfo"></span></div>
+    </div>
+
+    <div class="grid grid-cols-3 mt-4 bd">
+      <div class="p-4 sm:p-6 border-r border-[#2a2a30]" style="background:radial-gradient(120% 100% at 0% 100%,rgba(255,110,0,.30),transparent 70%)"><div class="lbl">active habits</div><div id="mHabits" class="head num text-4xl sm:text-6xl mt-2"></div></div>
+      <div class="p-4 sm:p-6 border-r border-[#2a2a30]" style="background:radial-gradient(120% 100% at 100% 0%,rgba(40,80,230,.34),transparent 70%)"><div class="lbl">month consistency</div><div id="mCons" class="head num text-4xl sm:text-6xl mt-2"></div></div>
+      <div class="p-4 sm:p-6"><div class="lbl" id="mRefLbl">today’s progress</div><div id="mToday" class="head num text-4xl sm:text-6xl mt-2"></div><div id="mTodaySub" class="mono text-[12px] dim mt-1"></div></div>
+    </div>
+  </section>
+
+  <!-- Matrix -->
+  <section class="py-10">
+    <div class="flex items-end justify-between mb-4 gap-3">
+      <h2 class="head text-3xl" style="font-weight:600">habit matrix</h2>
+      <div class="lbl">tap a cell to toggle →</div>
+    </div>
+    <div class="scroll bd"><table id="matrix" class="border-collapse"></table></div>
+  </section>
+
+  <!-- Analytics -->
+  <section class="grid lg:grid-cols-2 gap-6">
+    <div class="bd p-4 sm:p-6">
+      <div class="flex items-end justify-between mb-5 gap-3"><h2 class="head text-3xl" style="font-weight:600">consistency trend</h2><div class="lbl">daily completion %</div></div>
+      <div id="chart"></div>
+    </div>
+    <div class="bd p-4 sm:p-6">
+      <div class="flex items-end justify-between mb-5 gap-3"><h2 class="head text-3xl" style="font-weight:600">top habits</h2><div class="lbl">ranked by completion</div></div>
+      <div id="top" class="space-y-5"></div>
+    </div>
+  </section>
+
+  <footer class="mt-10 pt-5 border-t border-[#2a2a30] flex items-center justify-between gap-4">
+    <span class="lbl">data stored locally on this device</span>
+    <span class="flex items-center gap-2"><svg class="w-10 h-10"><use href="#loop"/></svg><span class="head text-2xl">habit<b>loop</b></span></span>
+  </footer>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="fixed inset-0 z-50 items-end sm:items-center justify-center" style="background:rgba(0,0,0,.88)">
+  <div class="bg-black bd w-full sm:max-w-md p-5 max-h-[90vh] overflow-y-auto" style="border-color:#555;background:#000">
+    <div class="flex items-center justify-between mb-5"><h3 class="head text-2xl" style="font-weight:600">manage habits</h3><button class="btn" id="close">close</button></div>
+    <div class="flex gap-2 mb-5">
+      <input id="newName" class="f" maxlength="40" placeholder="New habit name…" autocomplete="off">
+      <button class="btn solid" id="add">add</button>
+    </div>
+    <div class="lbl mb-2">current habits</div>
+    <ul id="list" class="border-t border-[#2a2a30]"></ul>
+    <button class="btn mt-5 w-full" id="reset">reset to defaults</button>
+  </div>
+</div>
+
+<script>
+const KEY='habitmatrix.v1';
+const DEF=['Wake up at 06:00','Meditation','Gym','Cold shower','Deep work','Read 10 pages','Learn a skill','Sleep before 23:00'];
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const defaults=()=>({habits:DEF.map((n,i)=>({id:'h'+i,name:n})),checks:{},nid:DEF.length});
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!Array.isArray(S.habits))S=defaults();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const now=new Date();
+let Y=2026,M=9;
+const mk=()=>Y+'-'+(M+1);
+const get=h=>((S.checks[mk()]||{})[h]||[]);
+const pad=n=>String(n).padStart(2,'0');
+
+function info(){
+  const dim=new Date(Y,M+1,0).getDate();
+  const cur=now.getFullYear()===Y&&now.getMonth()===M;
+  const past=Y<now.getFullYear()||(Y===now.getFullYear()&&M<now.getMonth());
+  return{dim,cur,past,el:cur?now.getDate():past?dim:0,ref:cur?now.getDate():past?dim:1};
+}
+
+function render(){
+  const {dim,cur,past,el,ref}=info();
+  const H=S.habits,n=H.length;
+  $('title').innerHTML=MN[M].toLowerCase()+' <b>'+Y+'</b>';
+  $('frameInfo').textContent='frame '+pad(ref)+' / '+dim;
+  $('mHabits').textContent=pad(n);
+
+  let done=0;
+  H.forEach(h=>get(h.id).forEach(d=>{if(d<=el)done++}));
+  $('mCons').textContent=(n&&el?Math.round(done/(n*el)*100):0)+'%';
+
+  let rd=0;H.forEach(h=>{if(get(h.id).includes(ref))rd++});
+  $('mRefLbl').textContent=cur?'today’s progress':past?'final day progress':'day 1 progress';
+  $('mToday').textContent=(n?Math.round(rd/n*100):0)+'%';
+  $('mTodaySub').textContent=rd+' / '+n+' done · day '+ref;
+
+  let t='<thead><tr><th class="name lbl text-left px-3 py-2 min-w-[150px] sm:min-w-[200px] font-normal">habit</th>';
+  for(let d=1;d<=dim;d++)t+=`<th class="mono text-[11px] font-bold w-[32px] py-2 text-center ${cur&&d===now.getDate()?'today':'dim'}">${d}</th>`;
+  t+='<th class="lbl px-3 text-right font-normal">total</th></tr></thead><tbody>';
+  H.forEach(h=>{
+    const set=new Set(get(h.id));
+    t+=`<tr><td class="name text-[14px] px-3 border-t border-[#2a2a30] whitespace-nowrap">${esc(h.name)}</td>`;
+    for(let d=1;d<=dim;d++)t+=`<td class="p-0 border-t border-[#2a2a30]"><button class="cell ${set.has(d)?'on':''}" data-h="${h.id}" data-d="${d}" aria-label="${esc(h.name)} day ${d}" aria-pressed="${set.has(d)}"></button></td>`;
+    t+=`<td class="mono text-[13px] px-3 text-right border-t border-[#2a2a30]">${set.size}</td></tr>`;
+  });
+  if(!n)t+=`<tr><td class="name px-3 py-6 dim text-sm" colspan="${dim+2}">No habits. Add one →</td></tr>`;
+  $('matrix').innerHTML=t+'</tbody>';
+
+  // Trend
+  const W=dim*12,ratios=[];
+  for(let d=1;d<=dim;d++){let c=0;H.forEach(h=>{if(get(h.id).includes(d))c++});ratios.push(n?c/n:0)}
+  let bars='',pts='',grid='';
+  [0,25,50,75,100].forEach(v=>{grid+=`<line x1="0" x2="${W}" y1="${100-v}" y2="${100-v}" stroke="#2a2a30" stroke-width="1" vector-effect="non-scaling-stroke"/>`});
+  ratios.forEach((r,i)=>{
+    const x=i*12,h=Math.max(r*100,r?1:0);
+    bars+=`<rect x="${x+2}" y="${100-h}" width="8" height="${h}" fill="${cur&&i+1===now.getDate()?'#d4ff3a':'rgba(255,255,255,.5)'}"/>`;
+    pts+=`${x+6},${100-r*100} `;
+  });
+  $('chart').innerHTML=`<div class="flex gap-3">
+    <div class="flex flex-col justify-between mono text-[11px] dim text-right" style="height:170px;width:30px"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
+    <div class="flex-1 min-w-0"><svg viewBox="0 0 ${W} 100" preserveAspectRatio="none" class="w-full block" style="height:170px">${grid}${bars}<polyline points="${pts}" fill="none" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>
+    <div class="flex justify-between mono text-[11px] dim mt-2"><span>01</span><span>${pad(Math.ceil(dim/2))}</span><span>${dim}</span></div></div></div>`;
+
+  // Top habits
+  const den=el||dim;
+  const rank=H.map(h=>({name:h.name,c:get(h.id).filter(d=>!el||d<=el).length})).sort((a,b)=>b.c-a.c);
+  $('top').innerHTML=rank.length?rank.map((r,i)=>{
+    const p=Math.round(r.c/den*100);
+    return `<div><div class="flex justify-between items-baseline gap-3 mb-2"><span class="text-[14px]"><span class="mono dim mr-2 text-[12px]">${pad(i+1)}</span>${esc(r.name)}</span><span class="mono text-[13px] whitespace-nowrap">${r.c}/${den} · ${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`;
+  }).join(''):'<div class="dim text-sm">No habits yet.</div>';
+
+  $('list').innerHTML=H.map(h=>`<li class="flex items-center justify-between py-3 border-b border-[#2a2a30]"><span class="text-[14px] pr-3">${esc(h.name)}</span><button class="btn" data-rm="${h.id}">remove</button></li>`).join('')||'<li class="py-3 dim text-sm">Empty.</li>';
+}
+
+$('matrix').addEventListener('click',e=>{
+  const b=e.target.closest('.cell');if(!b)return;
+  const h=b.dataset.h,d=+b.dataset.d,k=mk();
+  S.checks[k]=S.checks[k]||{};
+  const a=new Set(S.checks[k][h]||[]);
+  a.has(d)?a.delete(d):a.add(d);
+  S.checks[k][h]=[...a].sort((x,y)=>x-y);
+  save();render();
+});
+$('prev').onclick=()=>{M--;if(M<0){M=11;Y--}render()};
+$('next').onclick=()=>{M++;if(M>11){M=0;Y++}render()};
+$('manage').onclick=()=>{$('modal').classList.add('open');setTimeout(()=>$('newName').focus(),50)};
+$('close').onclick=()=>$('modal').classList.remove('open');
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.remove('open')});
+function addHabit(){
+  const v=$('newName').value.trim();if(!v)return;
+  S.habits.push({id:'h'+(S.nid++),name:v});$('newName').value='';save();render();
+}
+$('add').onclick=addHabit;
+$('newName').addEventListener('keydown',e=>{if(e.key==='Enter')addHabit()});
+$('list').addEventListener('click',e=>{
+  const id=e.target.dataset.rm;if(!id)return;
+  S.habits=S.habits.filter(h=>h.id!==id);
+  Object.values(S.checks).forEach(m=>delete m[id]);
+  save();render();
+});
+$('reset').onclick=()=>{S=defaults();save();render()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('modal').classList.remove('open')});
+render();
+</script>
+</body>
+</html>

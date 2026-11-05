@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "A user's habit",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 40 },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "name", "userId"]
+    },
+    "HabitCheck": {
+      "title": "HabitCheck",
+      "description": "A checkmark for a habit on a specific day",
+      "type": "object",
+      "properties": {
+        "habitId": { "type": "string" },
+        "userId": { "type": "string" },
+        "monthKey": { "type": "string", "pattern": "^\\d{4}-\\d{1,2}$" },
+        "days": { "type": "array" }
+      },
+      "required": ["habitId", "userId", "monthKey", "days"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile collection"
+    },
+    "/users/{userId}/habits/{habitId}": {
+      "schema": "Habit",
+      "description": "Habits collection per user"
+    },
+    "/users/{userId}/checks/{monthKey}": {
+      "schema": "HabitCheck",
+      "description": "Checks collection per user per month"
+    }
+  }
+}

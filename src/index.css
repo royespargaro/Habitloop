@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #000;
+  --text: #fff;
+  --border: #2a2a30;
+  --accent: #d4ff3a;
+  --dim: #b3b8c2;
+  --cell: rgba(0, 0, 0, .4);
+  --noise-filter: invert(0);
+}
+:root.light {
+  --bg: #fff;
+  --text: #000;
+  --border: #ccc;
+  --accent: #a0c400;
+  --dim: #666;
+  --cell: rgba(255, 255, 255, .4);
+  --noise-filter: invert(1);
+}
+
+html { background: var(--bg); color: var(--text); }
+body { background: var(--bg); color: var(--text); margin: 0; font-family: 'Inter Tight', sans-serif; }
+
+.head { font-family: 'Inter Tight', sans-serif; text-transform: lowercase; }
+.bd { border: 1px solid var(--border); background: rgba(128, 128, 128, .1); backdrop-filter: blur(6px); }
+.btn { border: 1px solid var(--border); padding: 9px 14px; background: rgba(128, 128, 128, .2); cursor: pointer; color: var(--text); }
+.btn.solid { background: var(--accent); border-color: var(--accent); color: #000; }
+.cell { background: var(--cell); border: 1px solid var(--border); }
+.cell.on { background: var(--text); border-color: var(--text); }
+
+td.name { border-right: 1px solid var(--border); background: var(--bg); }
+th.today { background: var(--accent); color: #000; }
+
+body::after, .film { filter: var(--noise-filter); }
+
+/* ... existing film styles ... */
+.film { position: absolute; inset: 0; background: linear-gradient(180deg, #04060c 0%, #0b1636 40%, #2a1208 76%, #080403 100%); }
+.film i { position: absolute; display: block; border-radius: 999px; filter: blur(9px); mix-blend-mode: screen; animation: drift 16s ease-in-out infinite alternate; }
+.s1 { left: 6%; top: 60%; width: 46%; height: 16px; background: linear-gradient(90deg, transparent, #ff6a00 40%, #ffd9a0 60%, transparent); transform: rotate(-6deg); }
+.s2 { left: 30%; top: 68%; width: 52%; height: 12px; background: linear-gradient(90deg, transparent, #ff3d1f 45%, #ff9a3c 70%, transparent); transform: rotate(-3deg); animation-delay: -4s !important; }
+.s3 { left: -4%; top: 77%; width: 42%; height: 22px; background: linear-gradient(90deg, transparent, #ff8a2a 50%, transparent); transform: rotate(-9deg); animation-delay: -8s !important; }
+.s4 { right: 4%; top: 55%; width: 30%; height: 10px; background: linear-gradient(90deg, transparent, #5b8cff 50%, transparent); animation-delay: -6s !important; }
+.film i.bk { width: 80px; height: 80px; filter: blur(16px); background: radial-gradient(circle, rgba(255, 150, 60, .5), transparent 70%); }
+@keyframes drift { from { translate: -3% 0 } to { translate: 4% 0 } }
