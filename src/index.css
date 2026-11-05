@@ -1,105 +1,206 @@
 @import "tailwindcss";
 
+/* ============================================================
+   CINEMATIC EDITORIAL BRUTALISM — design tokens
+   Pitch black canvas · stark white type · one toxic neon accent.
+   Hairline architecture. No icons — typography does the work.
+   ============================================================ */
+
 :root {
   color-scheme: dark;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   -webkit-text-size-adjust: 100%;
+
+  --bg: #0a0a0a;
+  --ink: #ffffff;
+  --accent: #ccff00;
+  --ash: #6b6b72;
+  --ash-dim: #4a4a50;
+  --hairline: #1a1a20;
 }
-html { scroll-padding-top: env(safe-area-inset-top, 0px); background: #000; }
+
+html { scroll-padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
 body {
-  background: #000;
-  color: #fff;
+  background: var(--bg);
+  color: var(--ink);
   margin: 0;
   font-family: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
   -webkit-tap-highlight-color: transparent;
 }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(60% 40% at 6% 100%, rgba(255, 106, 0, .20), transparent 70%),
-              radial-gradient(55% 45% at 100% 0%, rgba(30, 70, 200, .24), transparent 70%);
-}
+
+/* Fine film-grain over the whole canvas — texture, not color.
+   This is the only full-page atmosphere; everything else stays flat black. */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 70;
   pointer-events: none;
-  opacity: .055;
+  opacity: .05;
   mix-blend-mode: screen;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
+/* ---- Typography ------------------------------------------------ */
+
+/* Massive, unapologetic headings. */
 .head {
   font-family: 'Inter Tight', 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 400;
-  letter-spacing: -.04em;
+  font-weight: 700;
+  letter-spacing: -.045em;
   text-transform: lowercase;
 }
-.head b, .num { font-weight: 800; }
+.head b, .num { font-weight: 900; }
+
 .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
-.lbl { font-size: 12px; letter-spacing: .05em; text-transform: lowercase; color: #b3b8c2; }
-.dim { color: #b3b8c2; }
-.bd { border: 1px solid #2a2a30; background: rgba(0, 0, 0, .62); backdrop-filter: blur(6px); }
-.btn {
-  border: 1px solid rgba(255, 255, 255, .5);
-  padding: 9px 14px;
-  font-size: 13px;
-  letter-spacing: .03em;
-  text-transform: lowercase;
-  background: rgba(0, 0, 0, .6);
-  color: #fff;
-  cursor: pointer;
-  transition: background .1s, color .1s;
+
+/* Tiny, utilitarian, wide-tracked labels — the counterweight to .head. */
+.lbl {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ash);
 }
-.btn:hover { background: #fff; color: #000; }
-.btn.solid { background: #d4ff3a; border-color: #d4ff3a; color: #000; font-weight: 600; }
-.btn.solid:hover { background: #fff; border-color: #fff; }
+.dim { color: var(--ash); }
+
+/* ---- Structure: hairline, architectural, no soft shadows -------- */
+
+.bd { border: 1px solid var(--hairline); background: rgba(0, 0, 0, .7); }
+
+/* ---- Actions: no icons, only typography ------------------------- */
+
+/* Secondary action: bare text, underline on interaction. No border, no fill. */
+.btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color .1s ease, opacity .1s ease;
+}
+.btn:hover { color: var(--accent); }
+.btn:focus-visible { outline: none; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Primary action: pill-shaped, solid neon, black text, sharp hover. */
+.btn.solid {
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  transition: background .08s ease, transform .08s ease;
+}
+.btn.solid:hover { background: var(--ink); color: #000; transform: translateY(-1px); }
+.btn.solid:active { transform: translateY(0); }
+.btn.solid:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; color: #000; text-decoration: none; }
+
+/* Framed secondary action (used where a button needs a visible target area,
+   e.g. prev/next in a tight nav cluster) — hairline pill, no fill. */
+.btn.framed {
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  padding: 9px 16px;
+}
+.btn.framed:hover { border-color: var(--ink); color: var(--ink); }
+
+input.f {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+  padding: 10px 2px;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+  letter-spacing: .02em;
+  border-radius: 0;
+  outline: none;
+  transition: border-color .1s ease;
+}
+input.f::placeholder { color: var(--ash-dim); }
+input.f:focus { border-color: var(--accent); }
+
+/* ---- Habit matrix grid ------------------------------------------ */
 
 .cell {
   display: block;
   width: 32px;
   height: 32px;
-  border: 1px solid #2a2a30;
-  background: rgba(0, 0, 0, .4);
+  border: 1px solid var(--hairline);
+  background: transparent;
   cursor: pointer;
   padding: 0;
-  transition: background .08s;
+  transition: background .08s ease, border-color .08s ease;
 }
-.cell:hover { border-color: #999; }
-.cell.on { background: #fff; border-color: #fff; box-shadow: 0 0 12px rgba(255, 255, 255, .35); }
+.cell:hover { border-color: var(--ash); }
+.cell.on { background: #fff; border-color: #fff; }
+.cell:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-th.today { color: #000; background: #d4ff3a; }
+/* "Today" marker: a hairline + neon underline, not a filled block —
+   the accent stays a sparing indicator, never a wash of color. */
+th.today { color: var(--accent); border-bottom: 2px solid var(--accent) !important; }
 td.name, th.name {
   position: sticky;
   left: 0;
   z-index: 2;
-  background: #000;
-  border-right: 1px solid #2a2a30;
+  background: var(--bg);
+  border-right: 1px solid var(--hairline);
 }
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-.scroll::-webkit-scrollbar { height: 6px; }
-.scroll::-webkit-scrollbar-thumb { background: #444; }
-.bar { height: 6px; background: #1c1c20; }
-.bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff6a00, #fff); }
+.scroll::-webkit-scrollbar { height: 3px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--hairline); }
 
-/* film still */
-.film { position: absolute; inset: 0; background: linear-gradient(180deg, #04060c 0%, #0b1636 40%, #2a1208 76%, #080403 100%); }
-.film i { position: absolute; display: block; border-radius: 999px; filter: blur(9px); mix-blend-mode: screen; animation: drift 16s ease-in-out infinite alternate; }
-.s1 { left: 6%; top: 60%; width: 46%; height: 16px; background: linear-gradient(90deg, transparent, #ff6a00 40%, #ffd9a0 60%, transparent); transform: rotate(-6deg); }
-.s2 { left: 30%; top: 68%; width: 52%; height: 12px; background: linear-gradient(90deg, transparent, #ff3d1f 45%, #ff9a3c 70%, transparent); transform: rotate(-3deg); animation-delay: -4s !important; }
-.s3 { left: -4%; top: 77%; width: 42%; height: 22px; background: linear-gradient(90deg, transparent, #ff8a2a 50%, transparent); transform: rotate(-9deg); animation-delay: -8s !important; }
-.s4 { right: 4%; top: 55%; width: 30%; height: 10px; background: linear-gradient(90deg, transparent, #5b8cff 50%, transparent); animation-delay: -6s !important; }
-.film i.bk { width: 80px; height: 80px; filter: blur(16px); background: radial-gradient(circle, rgba(255, 150, 60, .5), transparent 70%); }
+/* ---- Analytics ---------------------------------------------------- */
+
+.bar { height: 3px; background: var(--hairline); }
+.bar > i { display: block; height: 100%; background: var(--ash); }
+.bar.lead > i { background: var(--accent); }
+
+/* ---- Cinematic header frame --------------------------------------
+   Deep atmospheric gradient + drifting light streaks, confined to the
+   hero frame only — razor-sharp hairline edge keeps it from softening
+   the rest of the UI. */
+.film {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 12% 108%, rgba(204, 255, 0, .08), transparent 55%),
+    linear-gradient(180deg, #050505 0%, #0d0d10 45%, #0a0a0a 100%);
+}
+.film i {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+.s1 { left: 4%; top: 58%; width: 46%; height: 14px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.14) 45%, transparent); transform: rotate(-5deg); }
+.s2 { left: 32%; top: 70%; width: 50%; height: 10px; background: linear-gradient(90deg, transparent, rgba(204,255,0,.16) 45%, transparent); transform: rotate(-2deg); animation-delay: -6s !important; }
+.s3 { right: 2%; top: 40%; width: 34%; height: 10px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.10) 50%, transparent); animation-delay: -10s !important; }
 .film i.fx { animation: none; filter: none; mix-blend-mode: normal; border-radius: 0; }
-.flare { left: 8%; top: 46%; width: 84%; height: 2px; background: linear-gradient(90deg, transparent, #8fb4ff, transparent); box-shadow: 0 0 28px 6px rgba(90, 140, 255, .45); mix-blend-mode: screen !important; }
-.vig { inset: 0; background: radial-gradient(120% 90% at 50% 55%, transparent 35%, rgba(0, 0, 0, .85) 100%); }
-.scrim { left: 0; right: 0; bottom: 0; height: 62%; background: linear-gradient(transparent, rgba(0, 0, 0, .8)); }
+.vig { inset: 0; background: radial-gradient(130% 95% at 50% 60%, transparent 40%, rgba(0,0,0,.9) 100%); }
 @keyframes drift { from { translate: -3% 0 } to { translate: 4% 0 } }
-.lb { position: relative; z-index: 10; background: #000; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font: 12px 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; color: #e2e5ea; letter-spacing: .05em; }
+@media (prefers-reduced-motion: reduce) { .film i { animation: none; } }
+
+.lb {
+  position: relative;
+  z-index: 10;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ash);
+}

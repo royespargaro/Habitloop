@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import * as storage from '../services/storage';
 
 interface Habit { id: string; name: string; }
@@ -12,11 +12,9 @@ const HabitContext = createContext<{
 } | undefined>(undefined);
 
 export const HabitProvider = ({ children }: { children: React.ReactNode }) => {
-    const [data, setData] = useState<HabitData>(storage.defaults());
-
-    useEffect(() => {
-        setData(storage.load());
-    }, []);
+    // Lazy-init straight from storage so there's no first-paint flash of
+    // default habits before the real saved data swaps in.
+    const [data, setData] = useState<HabitData>(() => storage.load());
 
     const saveData = (newData: HabitData) => {
         setData(newData);
