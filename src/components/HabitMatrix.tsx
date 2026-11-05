@@ -3,18 +3,15 @@ import React from 'react';
 import { useHabits } from '../context/HabitContext';
 import { mk, getStreak } from '../utils/habitUtils';
 
-export const HabitMatrix = ({ year, month, dim, cur, filter }: { year: number, month: number, dim: number, cur: boolean, filter: string }) => {
+export const HabitMatrix = ({ year, month, dim, cur }: { year: number, month: number, dim: number, cur: boolean }) => {
     const { data, saveData } = useHabits();
     const now = new Date();
-
-    const filteredHabits = filter === 'All' ? data.habits : data.habits.filter(h => h.category === filter);
 
     const toggleCheck = (habitId: string, day: number) => {
         const newData = { ...data };
         const k = mk(year, month);
         newData.checks[k] = { ...newData.checks[k] };
-        const currentChecks = newData.checks[k][habitId];
-        const habitChecks = new Set(Array.isArray(currentChecks) ? currentChecks : []);
+        const habitChecks = new Set(newData.checks[k][habitId] || []);
         
         if (habitChecks.has(day)) {
             habitChecks.delete(day);
@@ -29,7 +26,7 @@ export const HabitMatrix = ({ year, month, dim, cur, filter }: { year: number, m
 
     return (
         <div className="scroll bd overflow-x-auto">
-            <table id="matrix" className="border-collapse w-full">
+            <table id="matrix" className="border-collapse">
                 <thead>
                     <tr>
                         <th className="name lbl text-left px-3 py-2 min-w-[150px] font-normal">habit</th>
@@ -42,15 +39,11 @@ export const HabitMatrix = ({ year, month, dim, cur, filter }: { year: number, m
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredHabits.map(h => {
-                        const habitChecks = (data.checks[mk(year, month)] || {})[h.id];
-                        const set = new Set(Array.isArray(habitChecks) ? habitChecks : []);
+                    {data.habits.map(h => {
+                        const set = new Set((data.checks[mk(year, month)] || {})[h.id] || []);
                         return (
                             <tr key={h.id}>
-                                <td className="name text-[14px] px-3 border-t border-[#2a2a30] whitespace-nowrap">
-                                    {h.name}
-                                    {h.category && <span className="block text-[10px] text-gray-500 uppercase">{h.category}</span>}
-                                </td>
+                                <td className="name text-[14px] px-3 border-t border-[#2a2a30] whitespace-nowrap">{h.name}</td>
                                 {[...Array(dim)].map((_, i) => {
                                     const day = i + 1;
                                     return (

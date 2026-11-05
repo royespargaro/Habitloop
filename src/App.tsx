@@ -11,17 +11,14 @@ export default function App() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [isManageOpen, setIsManageOpen] = useState(false);
-  const [filter, setFilter] = useState('All');
   const { data } = useHabits();
-
-  const categories = Array.from(new Set(data.habits.map(h => h.category).filter(Boolean))) as string[];
 
   const dim = getDaysInMonth(year, month);
   const cur = now.getFullYear() === year && now.getMonth() === month;
 
   return (
-    <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-16">
-      <header className="flex items-center justify-between py-4 border-b border-[#2a2a30]">
+    <div className="relative z-10 min-h-screen">
+      <header className="flex items-center justify-between py-4 px-4 sm:px-6 border-b border-[#2a2a30]">
         <div className="flex items-center gap-2">
             <span className="head text-2xl">habit<b>loop</b></span>
         </div>
@@ -33,28 +30,17 @@ export default function App() {
         </div>
       </header>
 
-      <section className="pt-6 sm:pt-8">
+      <section className="pt-6 sm:pt-8 px-4 sm:px-6">
         <h1 className="head text-6xl sm:text-9xl leading-none mb-10">
           {MN[month].toLowerCase()} <b>{year}</b>
         </h1>
-        
-        <div className="mb-6 flex gap-2">
-            <select className="bg-black border border-[#2a2a30] text-white p-2 text-sm" value={filter} onChange={e => setFilter(e.target.value)}>
-                <option value="All">All Categories</option>
-                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
-        </div>
-
-        <HabitMatrix year={year} month={month} dim={dim} cur={cur} filter={filter} />
+        <HabitMatrix year={year} month={month} dim={dim} cur={cur} />
       </section>
 
       <Analytics year={year} month={month} dim={dim} />
       
       <footer className="mt-10 pt-5 border-t border-[#2a2a30] flex items-center justify-between gap-4">
         <span className="lbl">data stored locally on this device</span>
-        <button className="btn" onClick={() => {
-            const isDark = document.documentElement.classList.toggle('light');
-        }}>Toggle Theme</button>
         <span className="flex items-center gap-2"><span className="head text-2xl">habit<b>loop</b></span></span>
       </footer>
       

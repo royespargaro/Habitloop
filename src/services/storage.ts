@@ -14,20 +14,6 @@ export const load = () => {
         if (!stored) return defaults();
         const data = JSON.parse(stored);
         if (!Array.isArray(data.habits)) return defaults();
-        
-        // Migrate checks: number[] -> { [day: number]: 'done' | 'skipped' }
-        Object.keys(data.checks).forEach(mKey => {
-            Object.keys(data.checks[mKey]).forEach(hId => {
-                if (Array.isArray(data.checks[mKey][hId])) {
-                    const newChecks: Record<string, 'done'> = {};
-                    data.checks[mKey][hId].forEach((d: number) => {
-                        newChecks[String(d)] = 'done';
-                    });
-                    data.checks[mKey][hId] = newChecks;
-                }
-            });
-        });
-
         return data;
     } catch (e) {
         return defaults();
