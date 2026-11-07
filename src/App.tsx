@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import {
   Activity, Archive, ArrowDown, ArrowUp, ArrowUpRight, BarChart3, CalendarDays,
   Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock3,
@@ -30,23 +31,23 @@ function useAppData() {
 }
 
 function Button({ children, onClick, variant = 'ghost', className = '', title, type = 'button', disabled = false }: {
-  children: React.ReactNode; onClick?: () => void; variant?: 'ghost' | 'solid' | 'outline' | 'danger';
+  children: ReactNode; onClick?: () => void; variant?: 'ghost' | 'solid' | 'outline' | 'danger';
   className?: string; title?: string; type?: 'button' | 'submit'; disabled?: boolean;
 }) {
   return <button type={type} title={title} disabled={disabled} onClick={onClick} className={cx('ui-btn', `ui-btn-${variant}`, className)}>{children}</button>;
 }
-function SectionTitle({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
+function SectionTitle({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return <div className="section-title"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1></div>{children}</div>;
 }
-function Empty({ title, body, action }: { title: string; body: string; action?: React.ReactNode }) {
+function Empty({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return <div className="empty-state"><div className="empty-mark"><Sparkles size={19}/></div><h3>{title}</h3><p>{body}</p>{action}</div>;
 }
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal" onMouseDown={e => e.stopPropagation()}>
     <div className="modal-head"><h2>{title}</h2><button className="icon-btn" onClick={onClose}><X size={18}/></button></div>{children}
   </div></div>;
 }
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="field"><span>{label}</span>{children}</label>;
 }
 function Progress({ value, tone = 'lime' }: { value: number; tone?: 'lime' | 'blue' }) {
@@ -76,12 +77,14 @@ export default function App() {
 
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400); };
   const update = (fn: (current: AppData) => AppData) => setData(current => fn(current));
-  const toggleHabit = (habit: Habit) => update(current => {
-    const existing = current.habitLogs.find(l => l.habitId === habit.id && l.date === today);
+  const toggleHabitOnDate = (habit: Habit, date: string) => update(current => {
+    if (date > today) return current;
+    const existing = current.habitLogs.find(l => l.habitId === habit.id && l.date === date);
     return { ...current, habitLogs: existing
       ? current.habitLogs.filter(l => l.id !== existing.id)
-      : [...current.habitLogs, { id: uid(), habitId: habit.id, date: today, status: 'done' }] };
+      : [...current.habitLogs, { id: uid(), habitId: habit.id, date, status: 'done' }] };
   });
+  const toggleHabit = (habit: Habit) => toggleHabitOnDate(habit, today);
   const toggleTask = (task: Task) => update(current => ({
     ...current, tasks: current.tasks.map(t => t.id === task.id
       ? { ...t, status: t.status === 'done' ? 'todo' : 'done', completedAt: t.status === 'done' ? null : new Date().toISOString() }
@@ -147,7 +150,7 @@ export default function App() {
         {view === 'today' && <TodayView data={data} today={today} todayTasks={todayTasks} activeHabits={activeHabits} doneHabits={doneHabits} priorityTasks={priorityTasks} priorityIds={todayPlan.priorityTaskIds} completion={completion} completedToday={completedToday} onToggleHabit={toggleHabit} onToggleTask={toggleTask} onPriorities={setPriorities} onAddTask={() => openModal('task')} onEditTask={id => openModal('task', id)} onReview={() => openModal('review')}/>}
         {view === 'goals' && <GoalsView goals={data.goals} projects={data.projects} onAdd={() => openModal('goal')} onEdit={id => openModal('goal', id)} onDelete={id => remove('goal', id)}/>}
         {view === 'projects' && <ProjectsView projects={data.projects} goals={data.goals} tasks={data.tasks} onAdd={() => openModal('project')} onEdit={id => openModal('project', id)} onDelete={id => remove('project', id)} onAddTask={id => { openModal('task'); setEditingId(null); setData(current => ({ ...current, tasks: current.tasks })); window.sessionStorage.setItem('habitloop.newTaskProject', id); }}/>}
-        {view === 'habits' && <HabitsView habits={data.habits} logs={data.habitLogs} today={today} onAdd={() => openModal('habit')} onEdit={id => openModal('habit', id)} onDelete={id => remove('habit', id)} onToggle={toggleHabit}/>}
+        {view === 'habits' && <HabitsView habits={data.habits} logs={data.habitLogs} today={today} onAdd={() => openModal('habit')} onEdit={id => openModal('habit', id)} onDelete={id => remove('habit', id)} onToggle={toggleHabitOnDate}/>}
         {view === 'review' && <ReviewView data={data} today={today} onWrite={() => openModal('review')}/>}
       </div>
     </main>
@@ -204,7 +207,7 @@ function TodayView({ data, today, todayTasks, activeHabits, doneHabits, priority
 function GoalsView({ goals, projects, onAdd, onEdit, onDelete }: { goals: Goal[]; projects: Project[]; onAdd: () => void; onEdit: (id: string) => void; onDelete: (id: string) => void }) {
   const active = goals.filter(g => g.status === 'active');
   return <div className="view-stack"><SectionTitle eyebrow="direction · outcomes" title="Goals"><Button variant="solid" onClick={onAdd}><Plus size={15}/> New goal</Button></SectionTitle><div className="page-lede">A goal defines the result. Projects and tasks define the work that gets you there.</div>
-    {active.length ? <div className="goal-grid">{active.map(goal => { const linked = projects.filter(p => p.goalId === goal.id); const completed = linked.filter(p => p.status === 'completed').length; const progress = linked.length ? Math.round(completed / linked.length * 100) : 0; return <article className="goal-card" key={goal.id}><div className="card-topline"><span className="tag-label">ACTIVE GOAL</span><button className="icon-btn" onClick={() => onDelete(goal.id)}><Trash2 size={15}/></button></div><h3>{goal.title}</h3><p>{goal.outcome || 'Define what success looks like.'}</p><div className="goal-date"><CalendarDays size={14}/> Target · {goal.targetDate ? shortDate(goal.targetDate) : 'No deadline'}</div><div className="goal-progress-head"><span>Linked project completion</span><b>{progress}%</b></div><Progress value={progress}/><div className="goal-card-foot"><span>{linked.length} linked projects</span><button onClick={() => onEdit(goal.id)}>Edit goal <ArrowUpRight size={13}/></button></div></article>; })}</div> : <Empty title="Give your effort a direction." body="Create one meaningful outcome. You can connect projects and tasks to it as you go." action={<Button variant="solid" onClick={onAdd}><Plus size={15}/> Create a goal</Button>}/>}
+    {active.length ? <div className="goal-grid">{active.map(goal => { const linked = projects.filter(p => p.goalId === goal.id); const completed = linked.filter(p => p.status === 'completed').length; const progress = linked.length ? Math.round(completed / linked.length * 100) : 0; return <article className="goal-card" key={goal.id}><div className="card-topline"><span className="tag-label">ACTIVE GOAL</span><div className="project-actions"><button className="icon-btn" title="Edit goal" onClick={() => onEdit(goal.id)}><Settings2 size={15}/></button><button className="icon-btn" title="Delete goal" onClick={() => onDelete(goal.id)}><Trash2 size={15}/></button></div></div><h3>{goal.title}</h3><p>{goal.outcome || 'Define what success looks like.'}</p><div className="goal-date"><CalendarDays size={14}/> Target · {goal.targetDate ? shortDate(goal.targetDate) : 'No deadline'}</div><div className="goal-progress-head"><span>Linked project completion</span><b>{progress}%</b></div><Progress value={progress}/><div className="goal-card-foot"><span>{linked.length} linked projects</span><button onClick={() => onEdit(goal.id)}>Edit goal <ArrowUpRight size={13}/></button></div></article>; })}</div> : <Empty title="Give your effort a direction." body="Create one meaningful outcome. You can connect projects and tasks to it as you go." action={<Button variant="solid" onClick={onAdd}><Plus size={15}/> Create a goal</Button>}/>}
     {goals.some(g => g.status !== 'active') && <div className="archive-list"><div className="eyebrow">completed / archived</div>{goals.filter(g => g.status !== 'active').map(g => <div key={g.id} className="archive-row"><CheckCircle2 size={15}/><span>{g.title}</span><button onClick={() => onEdit(g.id)}>Edit</button></div>)}</div>}
   </div>;
 }
@@ -217,7 +220,7 @@ function ProjectsView({ projects, goals, tasks, onAdd, onEdit, onDelete, onAddTa
   </div>;
 }
 
-function HabitsView({ habits, logs, today, onAdd, onEdit, onDelete, onToggle }: { habits: Habit[]; logs: AppData['habitLogs']; today: string; onAdd: () => void; onEdit: (id: string) => void; onDelete: (id: string) => void; onToggle: (h: Habit) => void }) {
+function HabitsView({ habits, logs, today, onAdd, onEdit, onDelete, onToggle }: { habits: Habit[]; logs: AppData['habitLogs']; today: string; onAdd: () => void; onEdit: (id: string) => void; onDelete: (id: string) => void; onToggle: (h: Habit, date: string) => void }) {
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
   const days = new Date(year, month + 1, 0).getDate();
@@ -227,7 +230,7 @@ function HabitsView({ habits, logs, today, onAdd, onEdit, onDelete, onToggle }: 
   return <div className="view-stack"><SectionTitle eyebrow="consistency · repeatable actions" title="Habits"><Button variant="solid" onClick={onAdd}><Plus size={15}/> New habit</Button></SectionTitle><div className="page-lede">Build a rhythm, not a perfect streak. Track what you actually do.</div>
     <div className="habit-summary"><div><span>Active habits</span><b>{habits.filter(h => h.active).length}</b></div><div><span>Completions this month</span><b>{monthLogs.length}</b></div><div><span>Today</span><b>{habits.filter(h => h.active && logs.some(l => l.habitId === h.id && l.date === today && l.status === 'done')).length}/{habits.filter(h => h.active).length}</b></div></div>
     <section className="panel habit-matrix-panel"><div className="matrix-head"><div><div className="eyebrow">monthly view</div><h2>{monthName}</h2></div><div className="matrix-nav"><button className="icon-btn" onClick={() => moveMonth(-1)}><ChevronLeft size={17}/></button><button className="icon-btn" onClick={() => { setMonth(new Date().getMonth()); setYear(new Date().getFullYear()); }}>Today</button><button className="icon-btn" onClick={() => moveMonth(1)}><ChevronRight size={17}/></button></div></div>
-      {habits.length ? <div className="matrix-scroll"><table className="habit-table"><thead><tr><th className="habit-name-cell">Habit</th>{Array.from({ length: days }, (_, i) => <th key={i} className={`${i + 1 === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear() ? 'today-col' : ''}`}>{i + 1}</th>)}</tr></thead><tbody>{habits.map(h => <tr key={h.id}><td className="habit-name-cell"><div className="habit-name"><span className={cx('habit-active-dot', h.active && 'on')}/><button onClick={() => onEdit(h.id)}>{h.name}</button><button className="delete-mini" onClick={() => onDelete(h.id)}><Trash2 size={12}/></button></div></td>{Array.from({ length: days }, (_, i) => { const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`; const done = logs.some(l => l.habitId === h.id && l.date === date && l.status === 'done'); const future = date > today; return <td key={i}><button disabled={future || !h.active} aria-label={`${h.name} ${date}`} className={cx('matrix-cell', done && 'done', future && 'future')} onClick={() => onToggle(h)}>{done && <Check size={11}/>}</button></td>; })}</tr>)}</tbody></table></div> : <Empty title="No habits yet." body="Start with actions you can repeat consistently." action={<Button variant="outline" onClick={onAdd}><Plus size={15}/> Add a habit</Button>}/>}
+      {habits.length ? <div className="matrix-scroll"><table className="habit-table"><thead><tr><th className="habit-name-cell">Habit</th>{Array.from({ length: days }, (_, i) => <th key={i} className={`${i + 1 === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear() ? 'today-col' : ''}`}>{i + 1}</th>)}</tr></thead><tbody>{habits.map(h => <tr key={h.id}><td className="habit-name-cell"><div className="habit-name"><span className={cx('habit-active-dot', h.active && 'on')}/><button onClick={() => onEdit(h.id)}>{h.name}</button><button className="delete-mini" onClick={() => onDelete(h.id)}><Trash2 size={12}/></button></div></td>{Array.from({ length: days }, (_, i) => { const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`; const done = logs.some(l => l.habitId === h.id && l.date === date && l.status === 'done'); const future = date > today; return <td key={i}><button disabled={future || !h.active} aria-label={`${h.name} ${date}`} className={cx('matrix-cell', done && 'done', future && 'future')} onClick={() => onToggle(h, date)}>{done && <Check size={11}/>}</button></td>; })}</tr>)}</tbody></table></div> : <Empty title="No habits yet." body="Start with actions you can repeat consistently." action={<Button variant="outline" onClick={onAdd}><Plus size={15}/> Add a habit</Button>}/>}
       <div className="matrix-legend"><span><i className="legend-square done"/> Completed</span><span><i className="legend-square"/> Not completed</span><span>Future dates are locked</span></div>
     </section>
   </div>;
@@ -235,8 +238,8 @@ function HabitsView({ habits, logs, today, onAdd, onEdit, onDelete, onToggle }: 
 
 function ReviewView({ data, today, onWrite }: { data: AppData; today: string; onWrite: () => void }) {
   const thisWeek = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + i); return dateKey(d); });
-  const weekLogs = data.habitLogs.filter(l => thisWeek.includes(l.date) && l.status === 'done');
-  const weekTasks = data.tasks.filter(t => thisWeek.includes(t.dueDate));
+  const weekLogs = data.habitLogs.filter(l => thisWeek.includes(l.date) && l.date <= today && l.status === 'done');
+  const weekTasks = data.tasks.filter(t => thisWeek.includes(t.dueDate) && t.dueDate <= today);
   const doneTasks = weekTasks.filter(t => t.status === 'done').length;
   const openProjects = data.projects.filter(p => p.status === 'active');
   const latestReview = data.dailyReviews.filter(r => r.date <= today).sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -271,7 +274,7 @@ function EditorModal({ kind, id, data, onClose, onSave }: { kind: 'task' | 'goal
   const [energy, setEnergy] = useState(existingReview?.energy ?? 3);
   const isReview = kind === 'review';
   const heading = isReview ? 'Daily review' : `${id ? 'Edit' : 'Create'} ${kind}`;
-  const submit = (event: React.FormEvent) => {
+  const submit = (event: FormEvent) => {
     event.preventDefault();
     const now = new Date().toISOString();
     if (kind === 'review') { onSave(kind, { date: dateKey(), wins, blockers, notes, energy }); return; }
@@ -284,7 +287,7 @@ function EditorModal({ kind, id, data, onClose, onSave }: { kind: 'task' | 'goal
   return <Modal title={heading} onClose={onClose}><form className="editor-form" onSubmit={submit}>
     {kind !== 'review' && <Field label={kind === 'habit' ? 'Habit name' : 'Title'}><input autoFocus required maxLength={100} value={title} onChange={e => setTitle(e.target.value)} placeholder={kind === 'task' ? 'What needs to get done?' : kind === 'goal' ? 'What outcome are you aiming for?' : kind === 'project' ? 'Name this project' : 'e.g. Read for 20 minutes'}/></Field>}
     {(kind === 'goal' || kind === 'project') && <Field label={kind === 'goal' ? 'What does success look like?' : 'Description'}><textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} placeholder="Make the outcome concrete..."/></Field>}
-    {(kind === 'task' || kind === 'goal' || kind === 'project') && <Field label={kind === 'goal' ? 'Target date' : 'Due date'}><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value}/></Field>}
+    {(kind === 'task' || kind === 'goal' || kind === 'project') && <Field label={kind === 'goal' ? 'Target date' : 'Due date'}><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}/></Field>}
     {kind === 'task' && <><Field label="Project"><select value={projectId} onChange={e => setProjectId(e.target.value)}><option value="">Personal / unassigned</option>{data.projects.filter(p => p.status === 'active').map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></Field><Field label="Priority"><select value={priority} onChange={e => setPriority(e.target.value as Priority)}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></Field><Field label="Status"><select value={status} onChange={e => setStatus(e.target.value as typeof status)}><option value="todo">To do</option><option value="done">Completed</option><option value="skipped">Skipped</option></select></Field></>}
     {kind === 'project' && <Field label="Connect to a goal"><select value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">No linked goal</option>{data.goals.filter(g => g.status === 'active').map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select></Field>}
     {kind === 'habit' && <><Field label="Frequency"><select value={frequency} onChange={e => setFrequency(e.target.value as Habit['frequency'])}><option value="daily">Every day</option><option value="weekdays">Weekdays</option><option value="weekends">Weekends</option></select></Field><label className="toggle-field"><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)}/> Active habit</label></>}
