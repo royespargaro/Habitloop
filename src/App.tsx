@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import type { AppData, DailyReview, Goal, Habit, Priority, Project, Task } from './types';
 import { createId, createDefaultData, exportData, importData, loadData, saveData } from './services/appStore';
+import { useHabits } from './context/HabitContext';
+import { FilmHeader } from './components/FilmHeader';
+import { Overlay } from './components/Overlay';
 
 type View = 'today' | 'goals' | 'projects' | 'habits' | 'review';
 const dateKey = (date = new Date()) => {
@@ -22,13 +25,6 @@ const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateS
 const uid = createId;
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(' ');
 
-function useAppData() {
-  const [data, setData] = useState<AppData>(() => loadData());
-  const [ready, setReady] = useState(false);
-  useEffect(() => { setReady(true); }, []);
-  useEffect(() => { if (ready) { try { saveData(data); } catch (error) { console.error('Could not save Habitloop data', error); } } }, [data, ready]);
-  return [data, setData] as const;
-}
 
 function Button({ children, onClick, variant = 'ghost', className = '', title, type = 'button', disabled = false }: {
   children: ReactNode; onClick?: () => void; variant?: 'ghost' | 'solid' | 'outline' | 'danger';
@@ -55,7 +51,8 @@ function Progress({ value, tone = 'lime' }: { value: number; tone?: 'lime' | 'bl
 }
 
 export default function App() {
-  const [data, setData] = useAppData();
+  const { data, setData, user, signOut, signIn } = useHabits();
+  if (!data) return null;
   const [view, setView] = useState<View>('today');
   const [modal, setModal] = useState<'task' | 'goal' | 'project' | 'habit' | 'review' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,7 +60,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
   const today = dateKey();
-  const todayPlan = data.dailyPlans.find(p => p.date === today) ?? { date: today, priorityTaskIds: [] };
+  const todayPlan = data?.dailyPlans?.find(p => p.date === today) ?? { date: today, priorityTaskIds: [] };
   const todayTasks = data.tasks.filter(t => t.dueDate === today && t.status !== 'skipped');
   const activeHabits = data.habits.filter(h => h.active && (h.frequency === 'daily' || (h.frequency === 'weekdays' && ![0,6].includes(new Date().getDay())) || (h.frequency === 'weekends' && [0,6].includes(new Date().getDay()))));
   const doneHabits = activeHabits.filter(h => data.habitLogs.some(l => l.habitId === h.id && l.date === today && l.status === 'done')).length;
@@ -76,7 +73,7 @@ export default function App() {
   const completion = activeHabits.length + todayTasks.length === 0 ? 0 : Math.round(((doneHabits + completedToday) / (activeHabits.length + todayTasks.length)) * 100);
 
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400); };
-  const update = (fn: (current: AppData) => AppData) => setData(current => fn(current));
+  const update = (fn: (current: AppData) => AppData) => saveData(fn(data));
   const toggleHabitOnDate = (habit: Habit, date: string) => update(current => {
     if (date > today) return current;
     const existing = current.habitLogs.find(l => l.habitId === habit.id && l.date === date);
@@ -136,7 +133,10 @@ export default function App() {
           <button onClick={() => importRef.current?.click()}><Upload size={15}/> Restore backup</button>
           <input ref={importRef} type="file" accept="application/json" hidden onChange={e => handleImport(e.target.files?.[0])}/>
         </div>
-        <div className="local-note"><span className="status-dot"/> Your data stays on this device</div>
+        <div className="local-note">
+          <span className="status-dot"/> {user ? `Signed in as ${user.email}` : 'Data stays on this device'}
+          <button className="btn ml-2" onClick={user ? signOut : signIn}>{user ? 'Sign Out' : 'Sign In'}</button>
+        </div>
       </div>
     </aside>
 
@@ -145,6 +145,7 @@ export default function App() {
         <div className="breadcrumbs">workspace <ChevronRight size={13}/> <strong>{currentTitle}</strong></div>
         <div className="topbar-right"><span className="date-chip"><CalendarDays size={14}/>{prettyDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}</span><button className="avatar">R</button></div>
       </header>
+      <FilmHeader />
 
       <div className="content-wrap">
         {view === 'today' && <TodayView data={data} today={today} todayTasks={todayTasks} activeHabits={activeHabits} doneHabits={doneHabits} priorityTasks={priorityTasks} priorityIds={todayPlan.priorityTaskIds} completion={completion} completedToday={completedToday} onToggleHabit={toggleHabit} onToggleTask={toggleTask} onPriorities={setPriorities} onAddTask={() => openModal('task')} onEditTask={id => openModal('task', id)} onReview={() => openModal('review')}/>}
@@ -167,6 +168,7 @@ export default function App() {
       closeModal(); notify('Saved');
     }}/>}
     {toast && <div className="toast"><CheckCircle2 size={16}/>{toast}</div>}
+    <Overlay />
   </div>;
 }
 
@@ -176,9 +178,9 @@ function TodayView({ data, today, todayTasks, activeHabits, doneHabits, priority
 }) {
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [taskSearch, setTaskSearch] = useState('');
-  const available = data.tasks.filter(t => t.status !== 'skipped' && t.status !== 'done' && !priorityIds.includes(t.id) && (!taskSearch || t.title.toLowerCase().includes(taskSearch.toLowerCase())));
+  const available = data?.tasks?.filter(t => t.status !== 'skipped' && t.status !== 'done' && !priorityIds.includes(t.id) && (!taskSearch || t.title.toLowerCase().includes(taskSearch.toLowerCase())));
   const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
-  const projectName = (id: string | null) => data.projects.find(p => p.id === id)?.title ?? 'Personal';
+  const projectName = (id: string | null) => id ? data?.projects?.find(p => p.id === id)?.title ?? 'Personal' : 'Personal';
   return <div className="view-stack">
     <div className="today-intro"><div><div className="eyebrow">{prettyDate(today)}</div><h1>{greeting}<span className="muted">.</span></h1><p>Choose what matters. Then do the work.</p></div><button className="review-shortcut" onClick={onReview}><span className="review-icon"><BarChart3 size={17}/></span><span><b>Daily review</b><small>Close the loop</small></span><ArrowUpRight size={16}/></button></div>
     <div className="stat-grid">

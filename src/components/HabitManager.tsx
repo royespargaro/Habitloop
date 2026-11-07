@@ -5,15 +5,17 @@ import { useHabits } from '../context/HabitContext';
 export const HabitManager = () => {
     const { data, saveData } = useHabits();
     const [newName, setNewName] = useState('');
+    const [newCat, setNewCat] = useState('');
 
     const addHabit = () => {
         if (!newName.trim()) return;
         saveData({
             ...data,
-            habits: [...data.habits, { id: 'h' + data.nid, name: newName.trim() }],
+            habits: [...data.habits, { id: 'h' + data.nid, name: newName.trim(), category: newCat.trim() || undefined }],
             nid: data.nid + 1
         });
         setNewName('');
+        setNewCat('');
     };
 
     const removeHabit = (id: string) => {
@@ -47,14 +49,18 @@ export const HabitManager = () => {
 
     return (
         <div className="space-y-5">
-            <div className="flex gap-2">
+            <div className="space-y-2">
                 <input className="f" value={newName} onChange={e => setNewName(e.target.value)} maxLength={40} placeholder="New habit name…" />
-                <button className="btn solid" onClick={addHabit}>add</button>
+                <input className="f" value={newCat} onChange={e => setNewCat(e.target.value)} maxLength={20} placeholder="Category (optional)…" />
+                <button className="btn solid w-full" onClick={addHabit}>add</button>
             </div>
             <ul className="border-t border-[#2a2a30]">
                 {data.habits.map(h => (
                     <li key={h.id} className="flex items-center justify-between py-3 border-b border-[#2a2a30]">
-                        <span className="text-[14px]">{h.name}</span>
+                        <div className="flex flex-col">
+                            <span className="text-[14px]">{h.name}</span>
+                            {h.category && <span className="text-[10px] text-gray-500 uppercase">{h.category}</span>}
+                        </div>
                         <button className="btn" onClick={() => removeHabit(h.id)}>remove</button>
                     </li>
                 ))}

@@ -3,15 +3,18 @@ import React from 'react';
 import { useHabits } from '../context/HabitContext';
 import { mk, getStreak } from '../utils/habitUtils';
 
-export const HabitMatrix = ({ year, month, dim, cur }: { year: number, month: number, dim: number, cur: boolean }) => {
+export const HabitMatrix = ({ year, month, dim, cur, filter }: { year: number, month: number, dim: number, cur: boolean, filter: string }) => {
     const { data, saveData } = useHabits();
     const now = new Date();
+
+    const filteredHabits = filter === 'All' ? data.habits : data.habits.filter(h => h.category === filter);
 
     const toggleCheck = (habitId: string, day: number) => {
         const newData = { ...data };
         const k = mk(year, month);
         newData.checks[k] = { ...newData.checks[k] };
-        const habitChecks = new Set(newData.checks[k][habitId] || []);
+        const currentChecks = newData.checks[k][habitId];
+        const habitChecks = new Set(Array.isArray(currentChecks) ? currentChecks : []);
         
         if (habitChecks.has(day)) {
             habitChecks.delete(day);
@@ -26,7 +29,7 @@ export const HabitMatrix = ({ year, month, dim, cur }: { year: number, month: nu
 
     return (
         <div className="scroll bd overflow-x-auto">
-            <table id="matrix" className="border-collapse">
+            <table id="matrix" className="border-collapse w-full">
                 <thead>
                     <tr>
                         <th className="name lbl text-left px-3 py-2 min-w-[150px] font-normal">habit</th>
@@ -39,11 +42,15 @@ export const HabitMatrix = ({ year, month, dim, cur }: { year: number, month: nu
                     </tr>
                 </thead>
                 <tbody>
-                    {data.habits.map(h => {
-                        const set = new Set((data.checks[mk(year, month)] || {})[h.id] || []);
+                    {filteredHabits.map(h => {
+                        const habitChecks = (data.checks[mk(year, month)] || {})[h.id];
+                        const set = new Set(Array.isArray(habitChecks) ? habitChecks : []);
                         return (
                             <tr key={h.id}>
-                                <td className="name text-[14px] px-3 border-t border-[#2a2a30] whitespace-nowrap">{h.name}</td>
+                                <td className="name text-[14px] px-3 border-t border-[#2a2a30] whitespace-nowrap">
+                                    {h.name}
+                                    {h.category && <span className="block text-[10px] text-gray-500 uppercase">{h.category}</span>}
+                                </td>
                                 {[...Array(dim)].map((_, i) => {
                                     const day = i + 1;
                                     return (

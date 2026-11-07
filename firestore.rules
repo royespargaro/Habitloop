@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // User Master Gate
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Habits subcollection
+      match /habits/{habitId} {
+        allow read, write: if isOwner(userId) && isValidId(habitId);
+      }
+      
+      // Checks subcollection
+      match /checks/{monthKey} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
