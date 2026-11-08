@@ -19,14 +19,40 @@ export const HabitProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(currentUser); unsubscribeFirestore?.(); unsubscribeFirestore = undefined;
       if (!currentUser) { const local = loadData(); dataRef.current = local; setData(local); return; }
       unsubscribeFirestore = sync.subscribeToFirestore(currentUser.uid, remote => {
-        if (remote) { dataRef.current = remote; setData(remote); appStoreSave(remote); }
-        else void sync.syncToFirestore(currentUser.uid, dataRef.current).catch(error => console.error('Could not create the initial InPursuit cloud backup:', error));
+        if (remote) {
+          const localTimestamp = Date.parse(dataRef.current.updatedAt ?? '');
+          const remoteTimestamp = Date.parse(remote.updatedAt ?? '');
+          const localIsNewer = Number.isFinite(localTimestamp) && (!Number.isFinite(remoteTimestamp) || localTimestamp > remoteTimestamp);
+          const neitherHasTimestamp = !Number.isFinite(localTimestamp) && !Number.isFinite(remoteTimestamp);
+
+          if (localIsNewer || neitherHasTimestamp) {
+            const localCopy = { ...dataRef.current, updatedAt: new Date().toISOString() };
+            dataRef.current = localCopy;
+            setData(localCopy);
+            appStoreSave(localCopy);
+            void sync.syncToFirestore(currentUser.uid, localCopy).catch(error => console.error('Could not upload the newer local InPursuit data:', error));
+            return;
+          }
+
+          dataRef.current = remote;
+          setData(remote);
+          appStoreSave(remote);
+        } else {
+          const localCopy = { ...dataRef.current, updatedAt: new Date().toISOString() };
+          dataRef.current = localCopy;
+          setData(localCopy);
+          appStoreSave(localCopy);
+          void sync.syncToFirestore(currentUser.uid, localCopy).catch(error => console.error('Could not create the initial InPursuit cloud backup:', error));
+        }
       }, error => console.error(error));
     });
     return () => { unsubscribeAuth(); unsubscribeFirestore?.(); };
   }, []);
-  const saveData = (next: AppData) => {
-    dataRef.current = next; setData(next); appStoreSave(next);
+  const saveData = (newData: AppData) => {
+    const next = { ...newData, updatedAt: new Date().toISOString() };
+    dataRef.current = next;
+    setData(next);
+    appStoreSave(next);
     if (user) void sync.syncToFirestore(user.uid, next).catch(error => console.error('InPursuit saved locally, but cloud sync failed:', error));
   };
   const signIn = () => signInWithPopup(auth, new GoogleAuthProvider());
