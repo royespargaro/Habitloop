@@ -3,8 +3,16 @@ export type Status = 'active' | 'completed' | 'archived';
 export type TaskStatus = 'todo' | 'done' | 'skipped';
 export type Priority = 'high' | 'medium' | 'low';
 
+export interface LifeArea {
+  id: ID;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
 export interface Goal {
   id: ID;
+  lifeAreaId: ID | null;
   title: string;
   outcome: string;
   targetDate: string;
@@ -55,9 +63,8 @@ export interface DailyReview {
   energy: number;
 }
 export interface AppData {
-  schemaVersion: 2;
-  /** Last successful local edit, used to resolve local/cloud startup conflicts. */
-  updatedAt?: string;
+  schemaVersion: 3;
+  lifeAreas: LifeArea[];
   goals: Goal[];
   projects: Project[];
   tasks: Task[];
@@ -65,4 +72,12 @@ export interface AppData {
   habitLogs: HabitLog[];
   dailyPlans: DailyPlan[];
   dailyReviews: DailyReview[];
+}
+
+export interface BrainDumpPreview {
+  lifeAreas: Array<{ name: string; description: string }>;
+  goals: Array<{ title: string; outcome: string; lifeAreaName: string; targetDate: string }>;
+  projects: Array<{ title: string; description: string; goalTitle: string; dueDate: string }>;
+  habits: Array<{ name: string; frequency: Habit['frequency'] }>;
+  tasks: Array<{ title: string; projectTitle: string; dueDate: string; priority: Priority }>;
 }

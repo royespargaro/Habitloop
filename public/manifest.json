@@ -1,7 +1,7 @@
 {
   "name": "InPursuit",
   "short_name": "InPursuit",
-  "description": "An execution system for turning priorities into consistent action.",
+  "description": "A local-first workspace for goals, projects, habits, and daily reviews.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

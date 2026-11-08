@@ -1,8 +1,6 @@
 {
   "name": "InPursuit",
-  "description": "An execution system for turning priorities into consistent action.",
+  "description": "A local-first workspace for goals, projects, habits, and daily reviews.",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
