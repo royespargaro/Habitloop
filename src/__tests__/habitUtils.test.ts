@@ -1,21 +1,7 @@
-
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getStreak, mk } from '../utils/habitUtils';
-
 describe('habitUtils', () => {
-    it('calculates streak correctly', () => {
-        const now = new Date(2026, 9, 25); // Oct 25, 2026
-        const checks = {
-            [mk(2026, 9)]: { 'h1': [22, 23, 24, 25] }
-        };
-        expect(getStreak('h1', checks, now)).toBe(4);
-    });
-
-    it('returns 0 streak if today is missed', () => {
-        const now = new Date(2026, 9, 25);
-        const checks = {
-            [mk(2026, 9)]: { 'h1': [22, 23, 24] }
-        };
-        expect(getStreak('h1', checks, now)).toBe(0);
-    });
+ it('calculates a streak using the original month-first schema',()=>{const now=new Date(2026,9,25);const checks={[mk(2026,9)]:{h1:{'22':'done','23':'done','24':'done','25':'done'}}};expect(getStreak('h1',checks,now)).toBe(4);});
+ it('keeps the previous streak when today is not completed',()=>{const now=new Date(2026,9,25);const checks={[mk(2026,9)]:{h1:{'22':'done','23':'done','24':'done'}}};expect(getStreak('h1',checks,now)).toBe(3);});
+ it('does not count skipped days as completed or break the streak',()=>{const now=new Date(2026,9,25);const checks={[mk(2026,9)]:{h1:{'22':'done','23':'skipped','24':'done','25':'done'}}};expect(getStreak('h1',checks,now)).toBe(3);});
 });

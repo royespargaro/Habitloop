@@ -11,8 +11,8 @@ button:disabled{cursor:not-allowed;opacity:.4}
 .app-shell{min-height:100vh;background:radial-gradient(ellipse at 82% -12%,rgba(72,89,45,.12),transparent 38%),#090a0b}
 .sidebar{position:fixed;inset:0 auto 0 0;width:246px;border-right:1px solid #222522;background:#0b0c0d;display:flex;flex-direction:column;padding:27px 18px 18px;z-index:20}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#f4f4f1;font:600 21px 'Space Grotesk';letter-spacing:-1.1px;padding:0 8px 42px}
-.brand>span:last-child>span,.mobile-brand>span:last-child{color:#d7fb65}
-.brand-icon{width:29px;height:29px;border-radius:9px;background:#d7fb65;color:#14170d;display:grid;place-items:center}
+.brand>span:last-child>span,.mobile-brand>span:last-child>span{color:#d7fb65}
+.brand-mark{width:29px;height:29px;display:block;flex:0 0 auto;color:#d4ff3a}
 .side-label,.eyebrow{font:500 10px 'DM Mono',monospace;letter-spacing:1.3px;text-transform:uppercase;color:#777d73}
 .side-label{padding:0 11px 11px}
 .side-nav{display:grid;gap:4px}
@@ -235,7 +235,7 @@ button:disabled{cursor:not-allowed;opacity:.4}
 .review-form-intro p{font-size:11px;color:#a3ad96;line-height:1.6;margin:6px 0 0}
 .toast{position:fixed;right:24px;bottom:24px;z-index:70;display:flex;align-items:center;gap:9px;background:#d7fb65;color:#171b10;padding:11px 15px;border-radius:7px;font-size:11px;font-weight:600;box-shadow:0 10px 35px #0008}
 @media(max-width:1050px){.sidebar{width:215px}.main-area{margin-left:215px}.content-wrap{padding:34px 27px 60px}.topbar{padding:0 27px}.today-columns{grid-template-columns:1fr}.review-metrics{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.sidebar{display:none}.main-area{margin-left:0}.topbar{height:58px;padding:0 17px}.mobile-brand{display:flex;align-items:center;gap:8px;font:600 17px 'Space Grotesk';letter-spacing:-.8px}.mobile-brand .brand-icon{width:24px;height:24px;border-radius:7px}.breadcrumbs{display:none}.topbar-right{gap:10px}.date-chip{font-size:10px}.content-wrap{padding:27px 16px 50px}.today-intro{align-items:flex-start;gap:12px}.today-intro h1,.section-title h1{font-size:35px}.today-intro p{font-size:11px}.review-shortcut{padding:8px}.review-shortcut small{display:none}.review-shortcut>svg{display:none}.stat-grid{gap:7px}.stat-card{padding:12px 10px;min-height:128px}.stat-top{font-size:9px}.stat-top svg{width:13px}.stat-value{font-size:27px;margin:12px 0 7px}.stat-foot{font-size:9px;line-height:1.4}.today-columns{gap:10px}.panel{padding:15px}.panel-head h2{font-size:16px}.goal-grid{grid-template-columns:1fr}.section-title{align-items:center}.section-title h1{font-size:34px}.page-toolbar{align-items:flex-start;flex-direction:column}.habit-summary>div{padding:12px 10px}.habit-summary span{font-size:9px}.habit-summary b{font-size:20px}.matrix-head{padding:0 13px 13px}.habit-name-cell{min-width:145px;width:145px;padding-left:12px}.habit-name>button:nth-child(2){max-width:100px}.matrix-cell{width:15px;height:15px}.matrix-legend{gap:10px;padding-left:13px;flex-wrap:wrap}.review-metrics{grid-template-columns:repeat(2,1fr);gap:8px}.review-metric{padding:13px}.review-prompt{align-items:flex-start;flex-wrap:wrap}.review-prompt>div:nth-child(2){min-width:calc(100% - 55px)}.review-prompt .ui-btn{margin-left:45px}.today-bottom{gap:10px}.today-bottom button{white-space:nowrap}.modal{padding:16px}.review-content{grid-template-columns:1fr}.review-date{grid-column:auto}}
+@media(max-width:700px){.sidebar{display:none}.main-area{margin-left:0}.topbar{height:58px;padding:0 17px}.mobile-brand{display:flex;align-items:center;gap:8px;font:600 17px 'Space Grotesk';letter-spacing:-.8px}.mobile-brand .brand-mark{width:24px;height:24px;border-radius:7px}.breadcrumbs{display:none}.topbar-right{gap:10px}.date-chip{font-size:10px}.content-wrap{padding:27px 16px 50px}.today-intro{align-items:flex-start;gap:12px}.today-intro h1,.section-title h1{font-size:35px}.today-intro p{font-size:11px}.review-shortcut{padding:8px}.review-shortcut small{display:none}.review-shortcut>svg{display:none}.stat-grid{gap:7px}.stat-card{padding:12px 10px;min-height:128px}.stat-top{font-size:9px}.stat-top svg{width:13px}.stat-value{font-size:27px;margin:12px 0 7px}.stat-foot{font-size:9px;line-height:1.4}.today-columns{gap:10px}.panel{padding:15px}.panel-head h2{font-size:16px}.goal-grid{grid-template-columns:1fr}.section-title{align-items:center}.section-title h1{font-size:34px}.page-toolbar{align-items:flex-start;flex-direction:column}.habit-summary>div{padding:12px 10px}.habit-summary span{font-size:9px}.habit-summary b{font-size:20px}.matrix-head{padding:0 13px 13px}.habit-name-cell{min-width:145px;width:145px;padding-left:12px}.habit-name>button:nth-child(2){max-width:100px}.matrix-cell{width:15px;height:15px}.matrix-legend{gap:10px;padding-left:13px;flex-wrap:wrap}.review-metrics{grid-template-columns:repeat(2,1fr);gap:8px}.review-metric{padding:13px}.review-prompt{align-items:flex-start;flex-wrap:wrap}.review-prompt>div:nth-child(2){min-width:calc(100% - 55px)}.review-prompt .ui-btn{margin-left:45px}.today-bottom{gap:10px}.today-bottom button{white-space:nowrap}.modal{padding:16px}.review-content{grid-template-columns:1fr}.review-date{grid-column:auto}}
 @media(max-width:390px){.date-chip{display:none}.stat-grid{grid-template-columns:1fr}.stat-card{min-height:unset}.stat-value{font-size:25px}.today-intro h1{font-size:31px}}
 
 
@@ -251,9 +251,9 @@ body::before {
 }
 .app-shell { position:relative; z-index:1; background:transparent; }
 .sidebar { background:rgba(0,0,0,.78); border-color:#2a2a30; backdrop-filter:blur(10px); }
-.brand { font-family:'Inter Tight',sans-serif; font-weight:500; letter-spacing:-.8px; text-transform:lowercase; }
-.brand>span:last-child>span,.mobile-brand>span:last-child { color:#d4ff3a; }
-.brand-icon { border-radius:2px; background:#d4ff3a; color:#000; }
+.brand { font-family:'Inter Tight',sans-serif; font-weight:500; letter-spacing:-.8px; text-transform:none; }
+.brand>span:last-child>span,.mobile-brand>span:last-child { color:#f4f4f1; }
+.brand-mark { border-radius:0; background:transparent; color:#d4ff3a; }
 .side-label,.eyebrow { font-family:'JetBrains Mono',monospace; color:#9297a1; letter-spacing:1px; }
 .nav-item { border-radius:2px; color:#aeb3bd; }
 .nav-item:hover { background:rgba(255,255,255,.07); }

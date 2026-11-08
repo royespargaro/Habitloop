@@ -7,9 +7,10 @@ import {
   Settings2, Sparkles, Target, Trash2, Upload, X, Zap,
 } from 'lucide-react';
 import type { AppData, DailyReview, Goal, Habit, Priority, Project, Task } from './types';
-import { createId, createDefaultData, exportData, importData, loadData, saveData } from './services/appStore';
+import { createId, exportData, importData } from './services/appStore';
 import { useHabits } from './context/HabitContext';
 import { FilmHeader } from './components/FilmHeader';
+import { InPursuitMark } from './components/InPursuitMark';
 import { Overlay } from './components/Overlay';
 
 type View = 'today' | 'goals' | 'projects' | 'habits' | 'review';
@@ -51,7 +52,7 @@ function Progress({ value, tone = 'lime' }: { value: number; tone?: 'lime' | 'bl
 }
 
 export default function App() {
-  const { data, setData, user, signOut, signIn } = useHabits();
+  const { data, saveData, user, signOut, signIn } = useHabits();
   if (!data) return null;
   const [view, setView] = useState<View>('today');
   const [modal, setModal] = useState<'task' | 'goal' | 'project' | 'habit' | 'review' | null>(null);
@@ -105,7 +106,7 @@ export default function App() {
   };
   const handleImport = async (file?: File) => {
     if (!file) return;
-    try { const imported = await importData(file); setData(imported); notify('Backup restored successfully'); }
+    try { const imported = await importData(file); saveData(imported); notify('Backup restored successfully'); }
     catch (error) { notify(error instanceof Error ? error.message : 'Import failed'); }
     if (importRef.current) importRef.current.value = '';
   };
@@ -121,7 +122,7 @@ export default function App() {
 
   return <div className="app-shell">
     <aside className="sidebar">
-      <a className="brand" href="#" onClick={e => { e.preventDefault(); setView('today'); }}><span className="brand-icon"><Zap size={17} fill="currentColor"/></span><span>habit<span>loop</span></span></a>
+      <a className="brand" href="#" onClick={e => { e.preventDefault(); setView('today'); }}><InPursuitMark className="brand-mark" /><span>In<span>Pursuit</span></span></a>
       <div className="side-label">workspace</div>
       <nav className="side-nav">{nav.map(item => <button key={item.id} onClick={() => setView(item.id)} className={cx('nav-item', view === item.id && 'active')}>
         <item.icon size={17}/><span>{item.label}</span>{item.count !== undefined && <small>{item.count}</small>}
@@ -141,7 +142,7 @@ export default function App() {
     </aside>
 
     <main className="main-area">
-      <header className="topbar"><div className="mobile-brand"><span className="brand-icon"><Zap size={15} fill="currentColor"/></span>habit<span>loop</span></div>
+      <header className="topbar"><div className="mobile-brand"><InPursuitMark className="brand-mark" /><span>In<span>Pursuit</span></span></div>
         <div className="breadcrumbs">workspace <ChevronRight size={13}/> <strong>{currentTitle}</strong></div>
         <div className="topbar-right"><span className="date-chip"><CalendarDays size={14}/>{prettyDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}</span><button className="avatar">R</button></div>
       </header>
@@ -150,7 +151,7 @@ export default function App() {
       <div className="content-wrap">
         {view === 'today' && <TodayView data={data} today={today} todayTasks={todayTasks} activeHabits={activeHabits} doneHabits={doneHabits} priorityTasks={priorityTasks} priorityIds={todayPlan.priorityTaskIds} completion={completion} completedToday={completedToday} onToggleHabit={toggleHabit} onToggleTask={toggleTask} onPriorities={setPriorities} onAddTask={() => openModal('task')} onEditTask={id => openModal('task', id)} onReview={() => openModal('review')}/>}
         {view === 'goals' && <GoalsView goals={data.goals} projects={data.projects} onAdd={() => openModal('goal')} onEdit={id => openModal('goal', id)} onDelete={id => remove('goal', id)}/>}
-        {view === 'projects' && <ProjectsView projects={data.projects} goals={data.goals} tasks={data.tasks} onAdd={() => openModal('project')} onEdit={id => openModal('project', id)} onDelete={id => remove('project', id)} onAddTask={id => { openModal('task'); setEditingId(null); setData(current => ({ ...current, tasks: current.tasks })); window.sessionStorage.setItem('habitloop.newTaskProject', id); }}/>}
+        {view === 'projects' && <ProjectsView projects={data.projects} goals={data.goals} tasks={data.tasks} onAdd={() => openModal('project')} onEdit={id => openModal('project', id)} onDelete={id => remove('project', id)} onAddTask={id => { openModal('task'); setEditingId(null); window.sessionStorage.setItem('inpursuit.newTaskProject', id); }}/>}
         {view === 'habits' && <HabitsView habits={data.habits} logs={data.habitLogs} today={today} onAdd={() => openModal('habit')} onEdit={id => openModal('habit', id)} onDelete={id => remove('habit', id)} onToggle={toggleHabitOnDate}/>}
         {view === 'review' && <ReviewView data={data} today={today} onWrite={() => openModal('review')}/>}
       </div>
@@ -254,8 +255,8 @@ function ReviewView({ data, today, onWrite }: { data: AppData; today: string; on
 }
 
 function EditorModal({ kind, id, data, onClose, onSave }: { kind: 'task' | 'goal' | 'project' | 'habit' | 'review'; id: string | null; data: AppData; onClose: () => void; onSave: (kind: 'task' | 'goal' | 'project' | 'habit' | 'review', value: Task | Goal | Project | Habit | DailyReview) => void }) {
-  const projectForNewTask = window.sessionStorage.getItem('habitloop.newTaskProject');
-  useEffect(() => { if (kind === 'task') window.sessionStorage.removeItem('habitloop.newTaskProject'); }, [kind]);
+  const projectForNewTask = window.sessionStorage.getItem('inpursuit.newTaskProject');
+  useEffect(() => { if (kind === 'task') window.sessionStorage.removeItem('inpursuit.newTaskProject'); }, [kind]);
   const existingTask = data.tasks.find(x => x.id === id);
   const existingGoal = data.goals.find(x => x.id === id);
   const existingProject = data.projects.find(x => x.id === id);

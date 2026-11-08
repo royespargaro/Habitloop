@@ -1,65 +1,36 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import type { User } from 'firebase/auth';
+import type { AppData } from '../types';
 import { auth } from '../services/firebase';
-import { AppData } from '../types';
 import { loadData, saveData as appStoreSave } from '../services/appStore';
 import * as sync from '../services/syncService';
 
-export interface Habit { id: string; name: string; }
-
-export const HabitContext = createContext<{
-    data: AppData;
-    setData: React.Dispatch<React.SetStateAction<AppData>>;
-    saveData: (data: AppData) => void;
-    user: User | null;
-    signIn: () => void;
-    signOut: () => void;
-} | undefined>(undefined);
-
+type HabitContextValue = { data: AppData; setData: React.Dispatch<React.SetStateAction<AppData>>; saveData: (data: AppData) => void; user: User | null; signIn: () => Promise<unknown>; signOut: () => Promise<void> };
+export const HabitContext = createContext<HabitContextValue | undefined>(undefined);
 export const HabitProvider = ({ children }: { children: React.ReactNode }) => {
-    const [data, setData] = useState<AppData>(loadData());
-    const [user, setUser] = useState<User | null>(null);
-
-    useEffect(() => {
-        let unsubscribeFirestore: () => void;
-        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            if (unsubscribeFirestore) unsubscribeFirestore();
-
-            if (currentUser) {
-                unsubscribeFirestore = sync.subscribeToFirestore(currentUser.uid, (remoteData) => {
-                    setData(remoteData);
-                    appStoreSave(remoteData);
-                });
-            } else {
-                setData(loadData());
-            }
-        });
-        return () => {
-            unsubscribeAuth();
-            if (unsubscribeFirestore) unsubscribeFirestore();
-        };
-    }, []);
-
-    const saveData = (newData: AppData) => {
-        setData(newData);
-        appStoreSave(newData);
-        if (user) sync.syncToFirestore(user.uid, newData);
-    };
-
-    const signIn = () => signInWithPopup(auth, new GoogleAuthProvider());
-    const signOut = () => firebaseSignOut(auth);
-
-    return (
-        <HabitContext.Provider value={{ data, setData, saveData, user, signIn, signOut }}>
-            {children}
-        </HabitContext.Provider>
-    );
+  const [data, setData] = useState<AppData>(loadData);
+  const [user, setUser] = useState<User | null>(null);
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  useEffect(() => {
+    let unsubscribeFirestore: (() => void) | undefined;
+    const unsubscribeAuth = onAuthStateChanged(auth, currentUser => {
+      setUser(currentUser); unsubscribeFirestore?.(); unsubscribeFirestore = undefined;
+      if (!currentUser) { const local = loadData(); dataRef.current = local; setData(local); return; }
+      unsubscribeFirestore = sync.subscribeToFirestore(currentUser.uid, remote => {
+        if (remote) { dataRef.current = remote; setData(remote); appStoreSave(remote); }
+        else void sync.syncToFirestore(currentUser.uid, dataRef.current).catch(error => console.error('Could not create the initial InPursuit cloud backup:', error));
+      }, error => console.error(error));
+    });
+    return () => { unsubscribeAuth(); unsubscribeFirestore?.(); };
+  }, []);
+  const saveData = (next: AppData) => {
+    dataRef.current = next; setData(next); appStoreSave(next);
+    if (user) void sync.syncToFirestore(user.uid, next).catch(error => console.error('InPursuit saved locally, but cloud sync failed:', error));
+  };
+  const signIn = () => signInWithPopup(auth, new GoogleAuthProvider());
+  const signOut = () => firebaseSignOut(auth);
+  return <HabitContext.Provider value={{ data, setData, saveData, user, signIn, signOut }}>{children}</HabitContext.Provider>;
 };
-
-export const useHabits = () => {
-    const context = useContext(HabitContext);
-    if (!context) throw new Error('useHabits must be used within HabitProvider');
-    return context;
-};
+export const useHabits = () => { const context = useContext(HabitContext); if (!context) throw new Error('useHabits must be used within HabitProvider'); return context; };
