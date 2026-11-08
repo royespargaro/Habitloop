@@ -1,46 +1,49 @@
+import type { HabitLog } from '../types';
 
-export const MN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-export const mk = (y: number, m: number) => `${y}-${m + 1}`;
-
-export const pad = (n: number) => String(n).padStart(2, '0');
-
-export const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
-
-export const getStreak = (habitId: string, checks: any, now: Date) => {
-    let streak = 0;
-    let d = new Date(now);
-    d.setDate(d.getDate() - 1);
-    
-    while(true) {
-        const mKey = mk(d.getFullYear(), d.getMonth());
-        const day = String(d.getDate());
-        const status = checks[mKey] && checks[mKey][habitId] ? checks[mKey][habitId][day] : null;
-        
-        if (status === 'done') {
-            streak++;
-            d.setDate(d.getDate() - 1);
-        } else if (status === 'skipped') {
-            // Skipped days don't break streaks, just continue
-            d.setDate(d.getDate() - 1);
-        } else {
-            break;
-        }
-    }
-    
-    const todayKey = mk(now.getFullYear(), now.getMonth());
-    const todayStatus = checks[todayKey] && checks[todayKey][habitId] ? checks[todayKey][habitId][String(now.getDate())] : null;
-
-    if (todayStatus === 'done') {
-        streak++;
-    }
-    return streak;
+const localDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
-export const getBestStreak = (habitId: string, checks: any) => {
-    let best = 0;
-    let current = 0;
-    // Simplified: iterate through all recorded days (could be optimized)
-    // For now, focus on streak calculation logic.
-    return 0; // Placeholder for now, per strict requirements.
+export const mk = (year: number, month: number) => `${year}-${month + 1}`;
+export const pad = (value: number) => String(value).padStart(2, '0');
+export const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+
+export const getStreak = (habitId: string, logs: HabitLog[], now: Date) => {
+  const byDate = new Map(logs.filter(log => log.habitId === habitId).map(log => [log.date, log.status]));
+  let streak = byDate.get(localDateKey(now)) === 'done' ? 1 : 0;
+  const cursor = new Date(now);
+  cursor.setDate(cursor.getDate() - 1);
+
+  while (true) {
+    const status = byDate.get(localDateKey(cursor));
+    if (status === 'done') streak += 1;
+    else if (status !== 'skipped') break;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+};
+
+export const getBestStreak = (habitId: string, logs: HabitLog[]) => {
+  const byDate = new Map(logs.filter(log => log.habitId === habitId).map(log => [log.date, log.status]));
+  const dates = [...byDate.keys()].sort();
+  if (!dates.length) return 0;
+
+  const cursor = new Date(`${dates[0]}T12:00:00`);
+  const last = new Date(`${dates[dates.length - 1]}T12:00:00`);
+  let current = 0;
+  let best = 0;
+  while (cursor <= last) {
+    const status = byDate.get(localDateKey(cursor));
+    if (status === 'done') {
+      current += 1;
+      best = Math.max(best, current);
+    } else if (status !== 'skipped') {
+      current = 0;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return best;
 };

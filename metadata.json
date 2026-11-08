@@ -1,6 +1,8 @@
 {
-  "name": "HabitLoop",
-  "description": "Local-first habit tracking application to build consistency.",
+  "name": "InPursuit",
+  "description": "An execution system for turning priorities into consistent action.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

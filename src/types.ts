@@ -56,6 +56,8 @@ export interface DailyReview {
 }
 export interface AppData {
   schemaVersion: 2;
+  /** Last successful local edit, used to resolve local/cloud startup conflicts. */
+  updatedAt?: string;
   goals: Goal[];
   projects: Project[];
   tasks: Task[];
