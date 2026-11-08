@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { getStreak, mk } from '../utils/habitUtils';
+import { getBestStreak, getStreak } from '../utils/habitUtils';
+import type { HabitLog } from '../types';
+
+const log = (date: string, status: HabitLog['status'] = 'done'): HabitLog => ({ id: date, habitId: 'h1', date, status });
+
 describe('habitUtils', () => {
- it('calculates a streak using the original month-first schema',()=>{const now=new Date(2026,9,25);const checks={[mk(2026,9)]:{h1:{'22':'done','23':'done','24':'done','25':'done'}}};expect(getStreak('h1',checks,now)).toBe(4);});
- it('keeps the previous streak when today is not completed',()=>{const now=new Date(2026,9,25);const checks={[mk(2026,9)]:{h1:{'22':'done','23':'done','24':'done'}}};expect(getStreak('h1',checks,now)).toBe(3);});
- it('does not count skipped days as completed or break the streak',()=>{const now=new Date(2026,9,25);const checks={[mk(2026,9)]:{h1:{'22':'done','23':'skipped','24':'done','25':'done'}}};expect(getStreak('h1',checks,now)).toBe(3);});
+  it('calculates a current streak from the new habit log schema', () => {
+    const logs = ['2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'].map(date => log(date));
+    expect(getStreak('h1', logs, new Date(2026, 9, 25))).toBe(4);
+  });
+
+  it('keeps the previous streak when today is not completed yet', () => {
+    const logs = ['2026-10-22', '2026-10-23', '2026-10-24'].map(date => log(date));
+    expect(getStreak('h1', logs, new Date(2026, 9, 25))).toBe(3);
+  });
+
+  it('allows skipped days without counting them as completed days', () => {
+    const logs = [log('2026-10-22'), log('2026-10-23', 'skipped'), log('2026-10-24'), log('2026-10-25')];
+    expect(getStreak('h1', logs, new Date(2026, 9, 25))).toBe(3);
+  });
+
+  it('calculates the best streak across recorded history', () => {
+    const logs = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-05', '2026-10-06'].map(date => log(date));
+    expect(getBestStreak('h1', logs)).toBe(3);
+  });
 });
