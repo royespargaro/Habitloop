@@ -262,15 +262,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .mobile-brand{font-family:'Inter Tight',sans-serif;letter-spacing:0}
 .avatar{border-color:#555;background:#111;color:var(--lime);border-radius:50%}
 .content-wrap{position:relative}
-.today-intro{position:relative;isolation:isolate;display:flex;min-height:340px;flex-direction:column;justify-content:space-between;overflow:hidden;padding:15px 18px;border:1px solid var(--line);background:#05060a}
-.today-film{position:absolute;inset:36px 0 34px;z-index:-1;overflow:hidden;background:linear-gradient(180deg,#04060c 0%,#0b1636 38%,#261409 76%,#080403 100%)}
-.today-film::before{content:'';position:absolute;inset:0;background:radial-gradient(50% 40% at 75% 30%,rgba(43,83,194,.25),transparent 72%),radial-gradient(60% 38% at 24% 72%,rgba(255,106,0,.2),transparent 70%)}
-.light-ribbon{position:absolute;display:block;height:16px;filter:blur(9px);mix-blend-mode:screen;animation:lightDrift 18s ease-in-out infinite alternate}
-.ribbon-one{left:4%;top:61%;width:48%;background:linear-gradient(90deg,transparent,#ff6a00 42%,#ffd1a0 60%,transparent);transform:rotate(-6deg)}
-.ribbon-two{left:32%;top:69%;width:54%;height:12px;background:linear-gradient(90deg,transparent,#ff3d1f 40%,#ff9a3c 68%,transparent);transform:rotate(-3deg);animation-delay:-5s}
-.ribbon-three{left:-5%;top:78%;width:46%;height:20px;background:linear-gradient(90deg,transparent,#ff8a2a 50%,transparent);transform:rotate(-9deg);animation-delay:-9s}
-.blue-flare{right:3%;top:53%;width:34%;height:2px;background:linear-gradient(90deg,transparent,#8fb4ff,transparent);box-shadow:0 0 28px 6px rgba(90,140,255,.4);animation-delay:-7s}
-.film-vignette{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 55%,transparent 34%,rgba(0,0,0,.82) 100%),linear-gradient(transparent 35%,rgba(0,0,0,.62))}
 .film-meta,.film-caption{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:12px;color:#e2e5ea;font:10px 'JetBrains Mono',monospace;letter-spacing:.02em;text-transform:lowercase}
 .film-meta{margin:-15px -18px 0;padding:0 16px;height:36px;background:#000}
 .film-meta>span:first-child{display:flex;align-items:center;gap:7px}
@@ -464,3 +455,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 	.storage-warning{right:12px;bottom:calc(78px + env(safe-area-inset-bottom));left:12px;max-width:none}
 }
 .storage-warning{position:fixed;right:24px;bottom:24px;z-index:65;max-width:min(440px,calc(100vw - 48px));padding:12px 14px;border:1px solid rgba(245,158,11,.5);background:rgba(16,12,8,.96);color:#f3dec2;font:11px/1.5 'JetBrains Mono',monospace}
+
+.orb-container{position:absolute;z-index:1;right:80px;top:50%;width:340px;height:340px;margin-top:-170px}
+.orb-glow{position:absolute;inset:-40px;background:radial-gradient(circle,rgba(255,106,0,.15),transparent 70%);filter:blur(30px)}
+.orb-glass{position:relative;width:100%;height:100%;border-radius:50%;background:rgba(255,255,255,.03);backdrop-filter:blur(12px) saturate(180%);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 0 40px rgba(0,0,0,.5),0 0 20px rgba(0,0,0,.2);animation:floatOrb 10s ease-in-out infinite alternate}
+.orb-inner{position:absolute;inset:20px;background:linear-gradient(135deg,rgba(255,255,255,.05),transparent);border-radius:50%}
+@keyframes floatOrb{0%{transform:translateY(0)}100%{transform:translateY(-20px)}}
+@media(prefers-reduced-motion:reduce){.orb-glass{animation:none}}
+@media(max-width:767px){.orb-container{right:0;left:0;top:20px;width:160px;height:160px;margin:0 auto}}
+
+.ghost-word{position:absolute;z-index:0;right:-2%;top:50%;transform:translateY(-50%);font-weight:800;letter-spacing:-.06em;line-height:1;white-space:nowrap;font-size:clamp(140px,26vw,360px);color:#fff;opacity:.08;-webkit-mask-image:linear-gradient(90deg,transparent,#000 35%);mask-image:linear-gradient(90deg,transparent,#000 35%);pointer-events:none}
+.orb-word{position:absolute;inset:-20px;display:flex;align-items:center;justify-content:center;font-weight:800;letter-spacing:-.06em;line-height:1;color:#fff;opacity:0.2;font-size:120px;pointer-events:none}
+.today-intro-copy{position:relative;z-index:2}
+@media(max-width:767px){.today-intro{background-color:rgba(8,8,10,0.8)}}

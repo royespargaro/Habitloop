@@ -150,7 +150,7 @@ function isDailyReview(value: unknown): value is AppData['dailyReviews'][number]
     isString(value.notes) && Number.isInteger(value.energy) && Number(value.energy) >= 1 && Number(value.energy) <= 5;
 }
 
-function isValidData(value: unknown): value is StoredAppData {
+export function isValidAppData(value: unknown): value is StoredAppData {
   if (!isRecord(value) || (value.schemaVersion !== 2 && value.schemaVersion !== 3)) return false;
   const isV2 = value.schemaVersion === 2;
   return (isV2 || (Array.isArray(value.lifeAreas) && value.lifeAreas.every(isLifeArea))) &&
@@ -189,7 +189,7 @@ export function loadData(): AppData {
     if (raw) {
       try {
         const parsed: unknown = JSON.parse(raw);
-        if (isValidData(parsed)) return normalizeData(parsed);
+        if (isValidAppData(parsed)) return normalizeData(parsed);
       } catch {
         // Preserve invalid data before loading a clean default state.
       }
@@ -226,6 +226,6 @@ export async function importData(file: File): Promise<AppData> {
   } catch {
     throw new Error('This backup is not valid JSON.');
   }
-  if (!isValidData(parsed)) throw new Error('This file is not a valid InPursuit backup.');
+  if (!isValidAppData(parsed)) throw new Error('This file is not a valid InPursuit backup.');
   return normalizeData(parsed);
 }

@@ -3,14 +3,14 @@ export type IconName =
   | 'add' | 'check' | 'close' | 'arrow-up' | 'arrow-down' | 'arrow-up-right'
   | 'calendar' | 'download' | 'upload' | 'flag' | 'activity' | 'archive'
   | 'list' | 'search' | 'settings' | 'trash' | 'spark' | 'target' | 'clock'
-  | 'circle' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'spinner' | 'alert' | 'zap';
+  | 'circle' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'spinner' | 'alert' | 'zap' | 'user';
 
 const glyphs: Record<IconName, string> = {
   today: '', goals: '⨁', projects: '', habits: '', review: '',
   add: '+', check: '✓', close: '×', 'arrow-up': '↑', 'arrow-down': '↓', 'arrow-up-right': '↗',
   calendar: '', download: '↓', upload: '↑', flag: '⚑', activity: '∿', archive: '▱',
   list: '≡', search: '⌕', settings: '⎔', trash: '⌫', spark: '✳', target: '⨁', clock: '◷',
-  circle: '○', 'chevron-down': '⌄', 'chevron-left': '‹', 'chevron-right': '›', spinner: '◌', alert: '!', zap: 'ϟ',
+  circle: '○', 'chevron-down': '⌄', 'chevron-left': '‹', 'chevron-right': '›', spinner: '◌', alert: '!', zap: 'ϟ', user: '○',
 };
 
 type IconProps = { name: IconName; size?: number; className?: string };
@@ -69,6 +69,7 @@ export const Target = glyph('goals');
 export const Trash2 = glyph('trash');
 export const Upload = glyph('upload');
 export const X = glyph('close');
+export const User = glyph('user');
 export const Zap = glyph('zap');
 export const LoaderCircle = glyph('spinner');
 export const AlertCircle = glyph('alert');

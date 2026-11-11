@@ -19,7 +19,7 @@ function isBrainDumpPreview(value: unknown): value is BrainDumpPreview {
     Array.isArray(value.tasks) && value.tasks.every(item => hasStringFields(item, ['title', 'projectTitle', 'dueDate', 'priority']));
 }
 
-export default function BrainDumpModal({ onClose, onImport }: BrainDumpModalProps) {
+export const BrainDumpModal = ({ onClose, onImport }: BrainDumpModalProps) => {
   const [text, setText] = useState('');
   const [preview, setPreview] = useState<BrainDumpPreview | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());

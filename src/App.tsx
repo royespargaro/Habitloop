@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import BrainDumpModal from './components/BrainDumpModal';
+import { BrainDumpModal } from './components/BrainDumpModal';
+import { SettingsModal } from './components/SettingsModal';
+import { FilmHeader } from './components/FilmHeader';
+import { useHabits } from './context/HabitContext';
 import {
   Activity, ArrowUpRight, CalendarDays, Check, CheckCircle2, ChevronLeft,
-  ChevronRight, Flag, FolderKanban, Plus, Settings2, Sparkles, Target, Trash2, X,
+  ChevronRight, Flag, FolderKanban, Plus, Settings2, Sparkles, Target, Trash2, User, X,
 } from './components/Icon';
 import Icon from './components/Icon';
 import type { AppData, BrainDumpPreview, DailyReview, Goal, Habit, Priority, Project, Task } from './types';
@@ -68,8 +71,9 @@ function Progress({ value, tone = 'lime' }: { value: number; tone?: 'lime' | 'bl
 
 export default function App() {
   const [data, setData, storageError, recoveryWarning] = useAppData();
+  const { user, signOut } = useHabits();
   const [view, setView] = useState<View>('today');
-  const [modal, setModal] = useState<'task' | 'goal' | 'project' | 'habit' | 'review' | null>(null);
+  const [modal, setModal] = useState<'task' | 'goal' | 'project' | 'habit' | 'review' | 'settings' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
@@ -229,7 +233,7 @@ export default function App() {
     <main className="main-area">
       <header className="topbar"><div className="mobile-brand"><img className="brand-mark" src="/inpursuit-mark.svg" alt=""/><img className="brand-wordmark" src="/inpursuit-wordmark.svg" alt="InPursuit"/></div>
         <div className="breadcrumbs">workspace <Icon name="chevron-right" size={13}/> <strong>{currentTitle}</strong></div>
-        <div className="topbar-right"><button className="icon-btn brain-dump-trigger" type="button" title="AI brain dump" aria-label="Open AI brain dump" onClick={() => setBrainDumpOpen(true)}><Icon name="spark" size={16}/></button><span className="date-chip"><Icon name="calendar" size={14}/>{prettyDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}</span><button className="avatar">R</button></div>
+        <div className="topbar-right"><button className="icon-btn brain-dump-trigger" type="button" title="AI brain dump" aria-label="Open AI brain dump" onClick={() => setBrainDumpOpen(true)}><Icon name="spark" size={16}/></button><span className="date-chip"><Icon name="calendar" size={14}/>{prettyDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}</span><button className="avatar" onClick={() => setModal('settings')} aria-label="Open settings"><User size={16}/></button></div>
       </header>
 
       <div className="content-wrap">
@@ -247,7 +251,7 @@ export default function App() {
       </button>)}
     </nav>
 
-    {modal && <EditorModal kind={modal} id={editingId} data={data} activeProjectCount={activeProjects.length} newTaskProjectId={newTaskProjectId} onClose={closeModal} onSave={(kind, value) => {
+    {modal && modal !== 'settings' && <EditorModal kind={modal as any} id={editingId} data={data} activeProjectCount={activeProjects.length} newTaskProjectId={newTaskProjectId} onClose={closeModal} onSave={(kind, value) => {
       if (kind === 'project') {
         const project = value as Project;
         if (project.status === 'active' && !canActivateProject(data.projects, project.id)) {
@@ -265,6 +269,7 @@ export default function App() {
       });
       closeModal(); notify('Saved');
     }}/>}
+    {modal === 'settings' && <SettingsModal onClose={closeModal} user={user} onSignOut={signOut}/>}
     {toast && <div className="toast"><CheckCircle2 size={16}/>{toast}</div>}
       {storageNotice && <div className="storage-warning" role="status">{storageNotice}</div>}
     {brainDumpOpen && <BrainDumpModal onClose={() => setBrainDumpOpen(false)} onImport={importBrainDump}/>}
@@ -281,11 +286,13 @@ function TodayView({ data, today, todayTasks, activeHabits, completedHabitIds, d
   const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
   const projectName = (id: string | null) => data.projects.find(p => p.id === id)?.title ?? 'Personal';
   return <div className="view-stack">
-    <div className="today-intro">
-      <div className="today-film" aria-hidden="true"><i className="light-ribbon ribbon-one"/><i className="light-ribbon ribbon-two"/><i className="light-ribbon ribbon-three"/><i className="light-ribbon blue-flare"/><i className="film-vignette"/></div>
-      <div className="today-hud"><div className="camera-tags"><span className="record-tag"><i/>rec</span><span>daily reel</span><span>35mm</span><span>24fps</span><span>iso 800</span></div><span className="hero-telemetry">scene: daily overview · take {today}</span></div>
-      <div className="today-intro-copy"><div><div className="eyebrow">{prettyDate(today)}</div><h1>{greeting.toLowerCase()}.</h1><p>Choose what matters. Then do the work.</p></div><button className="review-shortcut" onClick={onReview}><Icon name="review" size={19}/><span><b>daily review</b><small>close the loop</small></span><Icon name="arrow-up-right" size={16}/></button></div>
-    </div>
+    <FilmHeader 
+      priorities={priorityTasks.length} 
+      habitsLeft={activeHabits.length} 
+      onStartFocus={() => console.log('Focus')} 
+      onAddTask={onAddTask} 
+    />
+    <div className="today-intro-copy"><div><div className="eyebrow">{prettyDate(today)}</div><h1>{greeting.toLowerCase()}.</h1><p>Choose what matters. Then do the work.</p></div><button className="review-shortcut" onClick={onReview}><Icon name="review" size={19}/><span><b>daily review</b><small>close the loop</small></span><Icon name="arrow-up-right" size={16}/></button></div>
     <div className="stat-grid">
       <div className="stat-card"><div className="stat-top"><span>Daily progress</span><Activity size={16}/></div><div className="stat-value">{completion}<small>%</small></div><Progress value={completion}/><div className="stat-foot">{doneHabits + completedToday} of {activeHabits.length + todayTasks.length} actions completed</div></div>
       <div className="stat-card"><div className="stat-top"><span>Priority wins</span><Flag size={16}/></div><div className="stat-value">{priorityTasks.filter(t => t.status === 'done').length}<small>/{priorityTasks.length}</small></div><div className="stat-foot">Your three most important outcomes</div><div className="stat-mini"><span style={{ width: `${priorityTasks.length ? priorityTasks.filter(t => t.status === 'done').length / priorityTasks.length * 100 : 0}%` }}/></div></div>
