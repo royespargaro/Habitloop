@@ -3,7 +3,6 @@ import type { FormEvent, ReactNode } from 'react';
 import { BrainDumpModal } from './components/BrainDumpModal';
 import { SettingsModal } from './components/SettingsModal';
 import { FilmHeader } from './components/FilmHeader';
-import { useHabits } from './context/HabitContext';
 import {
   Activity, ArrowUpRight, CalendarDays, Check, CheckCircle2, ChevronLeft,
   ChevronRight, Flag, FolderKanban, Plus, Settings2, Sparkles, Target, Trash2, User, X,
@@ -71,7 +70,6 @@ function Progress({ value, tone = 'lime' }: { value: number; tone?: 'lime' | 'bl
 
 export default function App() {
   const [data, setData, storageError, recoveryWarning] = useAppData();
-  const { user, signOut } = useHabits();
   const [view, setView] = useState<View>('today');
   const [modal, setModal] = useState<'task' | 'goal' | 'project' | 'habit' | 'review' | 'settings' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -269,7 +267,7 @@ export default function App() {
       });
       closeModal(); notify('Saved');
     }}/>}
-    {modal === 'settings' && <SettingsModal onClose={closeModal} user={user} onSignOut={signOut}/>}
+    {modal === 'settings' && <SettingsModal onClose={closeModal}/>}
     {toast && <div className="toast"><CheckCircle2 size={16}/>{toast}</div>}
       {storageNotice && <div className="storage-warning" role="status">{storageNotice}</div>}
     {brainDumpOpen && <BrainDumpModal onClose={() => setBrainDumpOpen(false)} onImport={importBrainDump}/>}

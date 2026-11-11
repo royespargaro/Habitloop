@@ -1,8 +1,12 @@
 import React from 'react';
 import { X, LogOut, User } from 'lucide-react';
-export const SettingsModal = ({ onClose, user, onSignOut }: { onClose: () => void, user: any, onSignOut: () => void }) => {
+import { useHabits } from '../context/HabitContext';
+
+export const SettingsModal = ({ onClose }: { onClose: () => void }) => {
+  const { user, signOut } = useHabits();
+
   const handleSignOut = async () => {
-    await onSignOut();
+    await signOut();
     onClose();
   };
 
