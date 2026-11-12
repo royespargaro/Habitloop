@@ -1,39 +1,76 @@
-import React from 'react';
-import { X, LogOut, User } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut } from 'lucide-react';
+import { Sparkles, User, X } from './Icon';
 import { useHabits } from '../context/HabitContext';
 
 export const SettingsModal = ({ onClose }: { onClose: () => void }) => {
-  const { user, signOut } = useHabits();
+  const { user, signIn, signOut } = useHabits();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSignIn = async () => {
+    setError('');
+    setBusy(true);
+    try {
+      await signIn();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not sign in right now.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleSignOut = async () => {
-    await signOut();
-    onClose();
+    setError('');
+    setBusy(true);
+    try {
+      await signOut();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not sign out right now.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
-      <div className="modal" onMouseDown={e => e.stopPropagation()}>
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={e => e.stopPropagation()}>
         <div className="modal-head">
-          <h2>Settings</h2>
-          <button className="icon-btn" onClick={onClose}><X size={18}/></button>
+          <div>
+            <div className="eyebrow">workspace · account</div>
+            <h2 id="settings-title">Settings</h2>
+          </div>
+          <button className="icon-btn" type="button" aria-label="Close settings" onClick={onClose}><X size={18}/></button>
         </div>
-        <div className="space-y-6">
-          <div className="flex items-center gap-3 p-4 border border-[#222226] bg-[#08080a] rounded-sm">
-            <User className="text-[#d4ff3a]" />
-            <div>
-              <p className="text-sm font-semibold text-[#f4f4f5]">Account</p>
-              <p className="text-xs text-[#71717a]">{user ? user.email : 'Not signed in'}</p>
+
+        <div className="settings-stack">
+          <div className="settings-card">
+            <div className="settings-avatar"><User size={18}/></div>
+            <div className="settings-card-copy">
+              <p className="settings-card-title">{user ? 'Signed in' : 'Local workspace'}</p>
+              <p className="settings-card-sub">{user ? (user.email ?? 'Connected account') : 'Your data is stored locally on this device'}</p>
             </div>
           </div>
-          
-          {user && (
-            <button 
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 p-2 border border-[#222226] bg-[#0d0d10] hover:bg-[#1a1a1f] text-[#ffaaa0] rounded-sm text-sm"
-            >
-              <LogOut size={16} /> Sign Out
-            </button>
-          )}
+
+          <p className="settings-note">
+            Use Export and Restore backup in the sidebar anytime to keep portable snapshots of your goals, projects, habits, and reviews.
+          </p>
+
+          {error && <p className="settings-error" role="alert">{error}</p>}
+
+          <div className="modal-actions">
+            <button className="ui-btn ui-btn-outline" type="button" onClick={onClose}>Close</button>
+            {user ? (
+              <button className="ui-btn ui-btn-danger" type="button" disabled={busy} onClick={handleSignOut}>
+                <LogOut size={15}/> {busy ? 'Signing out…' : 'Sign out'}
+              </button>
+            ) : (
+              <button className="ui-btn ui-btn-solid" type="button" disabled={busy} onClick={handleSignIn}>
+                <Sparkles size={15}/> {busy ? 'Connecting…' : 'Sign in with Google'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

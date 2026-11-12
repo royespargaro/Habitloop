@@ -2,16 +2,17 @@ import { useEffect, useRef } from 'react';
 import './film-header.css';
 
 interface FilmHeaderProps {
-  priorities?: number;
-  habitsLeft?: number;
-  onStartFocus?: () => void;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  scene?: string;
+  onReview?: () => void;
   onAddTask?: () => void;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export const FilmHeader = ({ priorities = 0, habitsLeft = 0, onStartFocus, onAddTask }: FilmHeaderProps) => {
+export const FilmHeader = ({ eyebrow, title, subtitle, scene = 'daily overview', onReview, onAddTask }: FilmHeaderProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const tcRef = useRef<HTMLSpanElement>(null);
 
@@ -60,7 +61,7 @@ export const FilmHeader = ({ priorities = 0, habitsLeft = 0, onStartFocus, onAdd
           <span>1/60</span>
           <span ref={tcRef}>00:00:00:00</span>
         </div>
-        <div>inpursuit_v2.0.0</div>
+        <div>{scene}</div>
       </div>
       <div className="fh-orb" aria-hidden="true">
         <div className="fh-orb-body">
@@ -74,14 +75,11 @@ export const FilmHeader = ({ priorities = 0, habitsLeft = 0, onStartFocus, onAdd
         </div>
       </div>
       <div className="fh-copy">
-        <div className="fh-eyebrow">today’s imperative</div>
-        <h1 className="fh-title">today<span>.</span></h1>
-        <p className="fh-text">
-          {plural(priorities, 'priority', 'priorities')} to finalize. {plural(habitsLeft, 'habit', 'habits')} to maintain.
-          Consistency is the only metric.
-        </p>
+        <div className="fh-eyebrow">{eyebrow}</div>
+        <h1 className="fh-title">{title}<span>.</span></h1>
+        <p className="fh-text">{subtitle}</p>
         <div className="fh-btns">
-          <button type="button" className="fh-btn fh-btn-solid" onClick={onStartFocus}>Start focus <b>→</b></button>
+          <button type="button" className="fh-btn fh-btn-solid" onClick={onReview}>Daily review <b>→</b></button>
           <button type="button" className="fh-btn fh-btn-outline" onClick={onAddTask}>Add task</button>
         </div>
       </div>

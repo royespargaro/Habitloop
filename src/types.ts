@@ -72,6 +72,7 @@ export interface AppData {
   habitLogs: HabitLog[];
   dailyPlans: DailyPlan[];
   dailyReviews: DailyReview[];
+  updatedAt?: string;
 }
 
 export interface BrainDumpPreview {

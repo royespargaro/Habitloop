@@ -284,13 +284,7 @@ function TodayView({ data, today, todayTasks, activeHabits, completedHabitIds, d
   const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
   const projectName = (id: string | null) => data.projects.find(p => p.id === id)?.title ?? 'Personal';
   return <div className="view-stack">
-    <FilmHeader 
-      priorities={priorityTasks.length} 
-      habitsLeft={activeHabits.length} 
-      onStartFocus={() => console.log('Focus')} 
-      onAddTask={onAddTask} 
-    />
-    <div className="today-intro-copy"><div><div className="eyebrow">{prettyDate(today)}</div><h1>{greeting.toLowerCase()}.</h1><p>Choose what matters. Then do the work.</p></div><button className="review-shortcut" onClick={onReview}><Icon name="review" size={19}/><span><b>daily review</b><small>close the loop</small></span><Icon name="arrow-up-right" size={16}/></button></div>
+    <FilmHeader eyebrow={prettyDate(today)} title={greeting.toLowerCase()} subtitle="Choose what matters. Then do the work." scene={`daily overview · take ${today}`} onReview={onReview} onAddTask={onAddTask}/>
     <div className="stat-grid">
       <div className="stat-card"><div className="stat-top"><span>Daily progress</span><Activity size={16}/></div><div className="stat-value">{completion}<small>%</small></div><Progress value={completion}/><div className="stat-foot">{doneHabits + completedToday} of {activeHabits.length + todayTasks.length} actions completed</div></div>
       <div className="stat-card"><div className="stat-top"><span>Priority wins</span><Flag size={16}/></div><div className="stat-value">{priorityTasks.filter(t => t.status === 'done').length}<small>/{priorityTasks.length}</small></div><div className="stat-foot">Your three most important outcomes</div><div className="stat-mini"><span style={{ width: `${priorityTasks.length ? priorityTasks.filter(t => t.status === 'done').length / priorityTasks.length * 100 : 0}%` }}/></div></div>
