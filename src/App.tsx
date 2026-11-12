@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { BrainDumpModal } from './components/BrainDumpModal';
 import { SettingsModal } from './components/SettingsModal';
 import { FilmHeader } from './components/FilmHeader';
+import { SignInPage } from './components/SignInPage';
+import { useHabits } from './context/HabitContext';
 import {
   Activity, ArrowUpRight, CalendarDays, Check, CheckCircle2, ChevronLeft,
   ChevronRight, Flag, FolderKanban, Plus, Settings2, Sparkles, Target, Trash2, User, X,
 } from './components/Icon';
 import Icon from './components/Icon';
 import type { AppData, BrainDumpPreview, DailyReview, Goal, Habit, Priority, Project, Task } from './types';
-import { consumeLoadWarning, createId, exportData, importData, loadData, saveData } from './services/appStore';
+import { createId, exportData, importData } from './services/appStore';
 import { canActivateProject, MAX_ACTIVE_PROJECTS } from './utils/projectLimits';
 
 type View = 'today' | 'goals' | 'projects' | 'habits' | 'review';
@@ -24,25 +26,6 @@ const prettyDate = (value: string, options: Intl.DateTimeFormatOptions = { weekd
 const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 const uid = createId;
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(' ');
-
-function useAppData() {
-  const [data, setData] = useState<AppData>(() => loadData());
-  const [ready, setReady] = useState(false);
-  useEffect(() => { setReady(true); }, []);
-  const [storageError, setStorageError] = useState('');
-  const [recoveryWarning] = useState(() => consumeLoadWarning());
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      saveData(data);
-      setStorageError('');
-    } catch (error) {
-      console.error('Could not save InPursuit data', error);
-      setStorageError('Changes are visible but could not be saved on this device. Export a backup or free local storage.');
-    }
-  }, [data, ready]);
-  return [data, setData, storageError, recoveryWarning] as const;
-}
 
 function Button({ children, onClick, variant = 'ghost', className = '', title, type = 'button', disabled = false }: {
   children: ReactNode; onClick?: () => void; variant?: 'ghost' | 'solid' | 'outline' | 'danger';
@@ -69,16 +52,18 @@ function Progress({ value, tone = 'lime' }: { value: number; tone?: 'lime' | 'bl
 }
 
 export default function App() {
-  const [data, setData, storageError, recoveryWarning] = useAppData();
+  const { data, saveData: persistData, user, storageNotice } = useHabits();
+  const [localWorkspaceActive, setLocalWorkspaceActive] = useState(false);
   const [view, setView] = useState<View>('today');
   const [modal, setModal] = useState<'task' | 'goal' | 'project' | 'habit' | 'review' | 'settings' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
   const [newTaskProjectId, setNewTaskProjectId] = useState<string | null>(null);
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  const avatarPhotoUrl = user?.photoURL && user.photoURL !== failedPhotoUrl ? user.photoURL : null;
   const today = dateKey();
-  const storageNotice = [recoveryWarning, storageError].filter(Boolean).join(' ');
   const todayPlan = data.dailyPlans.find(p => p.date === today) ?? { date: today, priorityTaskIds: [] };
   const todayTasks = data.tasks.filter(t => t.dueDate === today && t.status !== 'skipped');
   const activeHabits = data.habits.filter(h => h.active && (h.frequency === 'daily' || (h.frequency === 'weekdays' && ![0,6].includes(new Date().getDay())) || (h.frequency === 'weekends' && [0,6].includes(new Date().getDay()))));
@@ -91,7 +76,7 @@ export default function App() {
   const completion = activeHabits.length + todayTasks.length === 0 ? 0 : Math.round(((doneHabits + completedToday) / (activeHabits.length + todayTasks.length)) * 100);
 
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400); };
-  const update = (fn: (current: AppData) => AppData) => setData(current => fn(current));
+  const update = (fn: (current: AppData) => AppData) => persistData(fn(data));
   const toggleHabitOnDate = (habit: Habit, date: string) => update(current => {
     if (date > today) return current;
     const existing = current.habitLogs.find(l => l.habitId === habit.id && l.date === date);
@@ -123,7 +108,7 @@ export default function App() {
   };
   const handleImport = async (file?: File) => {
     if (!file) return;
-    try { const imported = await importData(file); setData(imported); notify('Backup restored successfully'); }
+    try { const imported = await importData(file); persistData(imported); notify('Backup restored successfully'); }
     catch (error) { notify(error instanceof Error ? error.message : 'Import failed'); }
     if (importRef.current) importRef.current.value = '';
   };
@@ -210,6 +195,10 @@ export default function App() {
   ];
   const currentTitle = nav.find(n => n.id === view)?.label ?? 'Today';
 
+  if (!user && !localWorkspaceActive) {
+    return <SignInPage onContinueLocal={() => setLocalWorkspaceActive(true)} />;
+  }
+
   return <div className="app-shell">
     <aside className="sidebar">
       <a className="brand" href="#" aria-label="InPursuit home" onClick={e => { e.preventDefault(); setView('today'); }}><img className="brand-mark" src="/inpursuit-mark.svg" alt=""/><img className="brand-wordmark" src="/inpursuit-wordmark.svg" alt="InPursuit"/></a>
@@ -231,7 +220,7 @@ export default function App() {
     <main className="main-area">
       <header className="topbar"><div className="mobile-brand"><img className="brand-mark" src="/inpursuit-mark.svg" alt=""/><img className="brand-wordmark" src="/inpursuit-wordmark.svg" alt="InPursuit"/></div>
         <div className="breadcrumbs">workspace <Icon name="chevron-right" size={13}/> <strong>{currentTitle}</strong></div>
-        <div className="topbar-right"><button className="icon-btn brain-dump-trigger" type="button" title="AI brain dump" aria-label="Open AI brain dump" onClick={() => setBrainDumpOpen(true)}><Icon name="spark" size={16}/></button><span className="date-chip"><Icon name="calendar" size={14}/>{prettyDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}</span><button className="avatar" onClick={() => setModal('settings')} aria-label="Open settings"><User size={16}/></button></div>
+        <div className="topbar-right"><button className="icon-btn brain-dump-trigger" type="button" title="AI brain dump" aria-label="Open AI brain dump" onClick={() => setBrainDumpOpen(true)}><Icon name="spark" size={16}/></button><span className="date-chip"><Icon name="calendar" size={14}/>{prettyDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}</span><button className="avatar" onClick={() => setModal('settings')} aria-label="Open settings">{avatarPhotoUrl ? <img className="avatar-img" src={avatarPhotoUrl} alt={user?.displayName ?? user?.email ?? 'Account profile'} referrerPolicy="no-referrer" onError={() => setFailedPhotoUrl(avatarPhotoUrl)}/> : <User size={16}/>}</button></div>
       </header>
 
       <div className="content-wrap">
@@ -267,7 +256,7 @@ export default function App() {
       });
       closeModal(); notify('Saved');
     }}/>}
-    {modal === 'settings' && <SettingsModal onClose={closeModal}/>}
+    {modal === 'settings' && <SettingsModal onClose={closeModal} onOpenSignIn={() => setLocalWorkspaceActive(false)}/>}
     {toast && <div className="toast"><CheckCircle2 size={16}/>{toast}</div>}
       {storageNotice && <div className="storage-warning" role="status">{storageNotice}</div>}
     {brainDumpOpen && <BrainDumpModal onClose={() => setBrainDumpOpen(false)} onImport={importBrainDump}/>}

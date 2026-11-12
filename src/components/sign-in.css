@@ -1,0 +1,873 @@
+/* Daytime train-carriage Sign-In composition */
+.train-auth-shell {
+  --ti-wall-top: #10201f;
+  --ti-wall: #142826;
+  --ti-wall-hi: #1c3532;
+  --ti-wall-deep: #0b1615;
+  --ti-ink: #0f1822;
+  --ti-ink-soft: #22303e;
+  --ti-ink-muted: #334354;
+  --ti-orange: #d45218;
+  --ti-orange-hi: #df5e24;
+  --ti-pillar-gap: 44px;
+
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(90% 45% at 50% 0%, rgba(44, 78, 74, 0.28), transparent 68%),
+    linear-gradient(180deg, var(--ti-wall-top) 0%, var(--ti-wall) 46%, var(--ti-wall-deep) 100%);
+  color: #f4f7f5;
+  font-family: var(--sk-ui, 'Instrument Sans', 'Inter Tight', system-ui, sans-serif);
+  overflow-x: hidden;
+}
+
+/* Carriage upper interior bar */
+.carriage-topbar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: max(16px, env(safe-area-inset-top, 16px)) clamp(20px, 4vw, 48px) 12px;
+}
+
+.carriage-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #f4f7f5;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.carriage-brand:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.carriage-brand-mark {
+  width: 26px;
+  height: 26px;
+  display: block;
+  object-fit: contain;
+}
+
+.carriage-brand-name {
+  font-family: var(--sk-display, 'Bricolage Grotesque', 'Inter Tight', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.carriage-top-link {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 7px 16px;
+  min-height: 36px;
+  color: #f4f7f5;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s;
+}
+
+.carriage-top-link:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
+.carriage-top-link:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* Main carriage stage */
+.carriage-stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px 0 0;
+  overflow: hidden;
+}
+
+/* 3-window carriage grid */
+.carriage-windows {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  width: 100%;
+  min-height: clamp(560px, 76dvh, 760px);
+  display: grid;
+  grid-template-columns:
+    minmax(72px, 0.26fr)
+    var(--ti-pillar-gap)
+    minmax(500px, 860px)
+    var(--ti-pillar-gap)
+    minmax(72px, 0.26fr);
+  align-items: stretch;
+  overflow: hidden;
+  border-top: 8px solid var(--ti-wall);
+  background: var(--ti-wall);
+}
+
+/* Continuous sunlit alpine sky + meadow spanning seamlessly across all windows */
+.train-panorama {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sky-fallback {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    #4f9fd6 0%,
+    #88c5ea 36%,
+    #cde5f5 58%,
+    #52763c 72%,
+    #688c3b 100%
+  );
+}
+
+.panorama-img {
+  position: relative;
+  z-index: 1;
+  width: 104%;
+  height: 104%;
+  margin-left: -2%;
+  margin-top: -1%;
+  object-fit: cover;
+  object-position: center 48%;
+  display: block;
+}
+
+.panorama-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 45%,
+    rgba(16, 36, 28, 0.08) 100%
+  );
+}
+
+/* Subtle carriage motion strictly gated on reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  .panorama-img {
+    animation: trainScenicDrift 46s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+}
+
+@keyframes trainScenicDrift {
+  from {
+    transform: translate3d(-1.2%, 0, 0) scale(1.02);
+  }
+  to {
+    transform: translate3d(1.2%, 0, 0) scale(1.02);
+  }
+}
+
+/* Window panes + outer carriage spandrel masks */
+.train-window {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 38px;
+  /* Spread shadow <= half pillar gap so corner spandrels stay solid carriage teal */
+  box-shadow:
+    0 0 0 22px var(--ti-wall),
+    0 18px 42px rgba(0, 0, 0, 0.45);
+}
+
+.side-window {
+  border-radius: 30px;
+  min-height: 100%;
+}
+
+.side-left {
+  margin-left: -26px;
+}
+
+.side-right {
+  margin-right: -26px;
+}
+
+.main-window {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px, 4.2vw, 46px) clamp(24px, 4vw, 48px);
+}
+
+/* Outer brushed stainless-steel / aluminum rounded frame */
+.window-bezel {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  border: 9px solid #6c777c;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.58),
+    inset 0 2px 3px rgba(255, 255, 255, 0.42),
+    inset 0 -3px 5px rgba(10, 18, 17, 0.55),
+    0 0 0 2px #0f1d1b,
+    0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* Metallic multi-tone highlight sheen along the bezel edge */
+.window-bezel::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: inherit;
+  border: 9px solid transparent;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(196, 206, 210, 0.18) 24%,
+    rgba(58, 70, 72, 0.35) 54%,
+    rgba(190, 178, 160, 0.32) 82%,
+    rgba(92, 86, 76, 0.45) 100%
+  ) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+/* Dark matte rubber window seal tucked directly inside the metal frame */
+.window-rubber-seal {
+  position: absolute;
+  inset: 8px;
+  border-radius: calc(38px - 8px);
+  pointer-events: none;
+  z-index: 5;
+  border: 5px solid #161c1d;
+  box-shadow:
+    inset 0 10px 24px rgba(11, 20, 22, 0.42),
+    inset 0 -8px 18px rgba(11, 20, 22, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.side-window .window-bezel {
+  border-width: 8px;
+}
+
+.side-window .window-bezel::before {
+  inset: -8px;
+  border-width: 8px;
+}
+
+.side-window .window-rubber-seal {
+  inset: 7px;
+  border-radius: calc(30px - 7px);
+  border-width: 4px;
+}
+
+/* Restrained natural daylight glass reflection */
+.window-glass-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: linear-gradient(
+    122deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.04) 24%,
+    transparent 46%,
+    rgba(255, 255, 255, 0.03) 82%,
+    transparent 100%
+  );
+}
+
+/* Painted teal carriage mullions between windows with subtle vertical trim seam */
+.carriage-pillar {
+  position: relative;
+  z-index: 3;
+  background: linear-gradient(
+    90deg,
+    var(--ti-wall) 0%,
+    var(--ti-wall-hi) 38%,
+    #23403c 50%,
+    var(--ti-wall-hi) 62%,
+    var(--ti-wall) 100%
+  );
+  box-shadow:
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.25);
+}
+
+.carriage-pillar::after {
+  content: '';
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(255, 255, 255, 0.14) 18%,
+    rgba(0, 0, 0, 0.35) 50%,
+    rgba(255, 255, 255, 0.12) 84%,
+    transparent
+  );
+}
+
+/* Lower horizontal brushed-bronze carriage sill & painted lower wall */
+.carriage-sill {
+  position: relative;
+  z-index: 8;
+  height: 14px;
+  width: 100%;
+  background: linear-gradient(
+    180deg,
+    #3f2b1f 0%,
+    #9f7352 24%,
+    #b68b69 44%,
+    #6b472f 74%,
+    #2a1a10 100%
+  );
+  border-top: 1px solid rgba(255, 224, 194, 0.32);
+  box-shadow:
+    0 -2px 8px rgba(0, 0, 0, 0.35),
+    0 6px 16px rgba(0, 0, 0, 0.52);
+}
+
+.carriage-lower-panel {
+  position: relative;
+  z-index: 7;
+  height: max(28px, env(safe-area-inset-bottom, 28px));
+  background: linear-gradient(180deg, var(--ti-wall) 0%, var(--ti-wall-deep) 100%);
+}
+
+/* Warm tan/terracotta train seat shoulders at desktop bottom corners */
+.carriage-seat {
+  position: absolute;
+  bottom: -24px;
+  width: clamp(140px, 16vw, 230px);
+  height: clamp(84px, 11vh, 130px);
+  z-index: 10;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 100% at 50% 18%,
+    #c67343 0%,
+    #9c4e24 52%,
+    #582810 100%
+  );
+  box-shadow:
+    inset 0 2px 5px rgba(255, 214, 180, 0.34),
+    0 -8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.carriage-seat-left {
+  left: -34px;
+  border-top-right-radius: 68px;
+  transform: rotate(-8deg);
+}
+
+.carriage-seat-right {
+  right: -34px;
+  border-top-left-radius: 68px;
+  transform: rotate(8deg);
+}
+
+/* Subtle localized luminous cloud-mist scrim behind center copy only — keeps sky, mountains & meadow open */
+.window-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      52% 56% at 50% 42%,
+      rgba(244, 249, 255, 0.58) 0%,
+      rgba(240, 247, 253, 0.34) 46%,
+      rgba(235, 244, 252, 0.08) 74%,
+      transparent 100%
+    );
+}
+
+/* Centered form directly over the open daylight sky & scenery */
+.signin-frame-content {
+  position: relative;
+  z-index: 5;
+  width: min(100%, 396px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.signin-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(15, 24, 34, 0.14);
+  color: #1a2836;
+  font-family: var(--sk-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(15, 24, 34, 0.08);
+}
+
+.signin-heading {
+  margin: 0;
+  font-family: var(--sk-display, 'Bricolage Grotesque', 'Inter Tight', sans-serif);
+  font-size: clamp(32px, 3.8vw, 44px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: var(--ti-ink);
+  text-wrap: balance;
+  text-shadow: 0 1px 16px rgba(255, 255, 255, 0.72);
+}
+
+.signin-subtitle {
+  margin: 10px 0 22px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ti-ink);
+  text-shadow: 0 1px 12px rgba(255, 255, 255, 0.85);
+}
+
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.signin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.signin-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ti-ink);
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.8);
+}
+
+.signin-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 24, 34, 0.2);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ti-ink);
+  font-size: 15px;
+  line-height: 1.4;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(15, 24, 34, 0.08);
+  transition: border-color 0.18s, box-shadow 0.18s, background-color 0.18s;
+}
+
+.signin-input::placeholder {
+  color: #5b6978;
+}
+
+.signin-input:hover:not(:disabled) {
+  border-color: rgba(15, 24, 34, 0.34);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.signin-input:focus {
+  outline: none;
+  border-color: var(--ti-orange);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(212, 82, 24, 0.18);
+}
+
+.signin-input.has-error {
+  border-color: #b91c1c;
+}
+
+.signin-input.has-error:focus {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.18);
+}
+
+.signin-field-error {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(254, 242, 242, 0.92);
+  border: 1px solid rgba(185, 28, 28, 0.22);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #991b1b;
+}
+
+.signin-field-error svg {
+  flex: none;
+}
+
+/* Crisp burnt-orange primary button with clean shadow and NO neon glow */
+.signin-btn-primary {
+  min-height: 46px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border: 1px solid rgba(146, 48, 8, 0.34);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--ti-orange-hi) 0%, var(--ti-orange) 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 4px 12px rgba(15, 24, 34, 0.16);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), filter 0.16s, box-shadow 0.16s;
+}
+
+.signin-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 6px 16px rgba(15, 24, 34, 0.2);
+}
+
+.signin-btn-primary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.signin-btn-primary:hover .signin-arrow {
+  transform: translateX(3px);
+}
+
+.signin-arrow {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.signin-btn-primary:focus-visible,
+.signin-btn-google:focus-visible,
+.signin-footer-link:focus-visible,
+.signin-local-btn:focus-visible,
+.signin-notice-link:focus-visible {
+  outline: 2px solid var(--ti-ink);
+  outline-offset: 3px;
+}
+
+.signin-btn-primary:disabled,
+.signin-btn-google:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.signin-notice {
+  margin-top: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 24, 34, 0.14);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ti-ink);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.signin-notice p {
+  margin: 0 0 6px;
+}
+
+.signin-notice-link {
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: #b9420e;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.signin-notice-link:hover {
+  color: var(--ti-ink);
+}
+
+.signin-auth-error {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: rgba(254, 242, 242, 0.94);
+  border: 1px solid rgba(185, 28, 28, 0.25);
+  color: #991b1b;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.signin-auth-error svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--ti-ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.signin-divider span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.signin-divider::before,
+.signin-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.signin-btn-google {
+  min-height: 46px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 24, 34, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ti-ink);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(15, 24, 34, 0.1);
+  transition: background-color 0.16s, border-color 0.16s, transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.signin-btn-google:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: rgba(15, 24, 34, 0.32);
+}
+
+.signin-footer {
+  margin: 18px 0 0;
+  padding: 5px 12px;
+  align-self: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  text-align: center;
+  font-size: 13px;
+  color: var(--ti-ink-soft);
+}
+
+.signin-footer-link {
+  border: 0;
+  padding: 2px 3px;
+  background: transparent;
+  color: var(--ti-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(15, 24, 34, 0.42);
+}
+
+.signin-footer-link:hover {
+  color: #b9420e;
+  text-decoration-color: #b9420e;
+}
+
+.signin-local-wrap {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.signin-local-btn {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.56);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 6px 14px;
+  min-height: 36px;
+  color: var(--ti-ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.16s, background-color 0.16s;
+}
+
+.signin-local-btn:hover {
+  color: var(--ti-ink);
+  background: rgba(255, 255, 255, 0.84);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.signin-spin {
+  animation: signinSpin 0.9s linear infinite;
+}
+
+@keyframes signinSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tablet narrowing */
+@media (max-width: 960px) {
+  .carriage-windows {
+    --ti-pillar-gap: 28px;
+    grid-template-columns:
+      minmax(28px, 0.15fr)
+      var(--ti-pillar-gap)
+      minmax(0, 1fr)
+      var(--ti-pillar-gap)
+      minmax(28px, 0.15fr);
+  }
+
+  .train-window {
+    box-shadow: 0 0 0 14px var(--ti-wall);
+  }
+
+  .carriage-seat {
+    display: none;
+  }
+}
+
+/* Mobile: preserve the single luminous daytime train window with visible scenery */
+@media (max-width: 767px) {
+  .carriage-topbar {
+    padding: max(12px, env(safe-area-inset-top, 12px)) 16px 10px;
+  }
+
+  .carriage-stage {
+    padding: 4px 12px 0;
+    align-items: stretch;
+  }
+
+  .carriage-windows {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: calc(100dvh - 102px);
+    border-top: 0;
+    background: transparent;
+    border-radius: 28px;
+    overflow: hidden;
+  }
+
+  .side-window,
+  .carriage-pillar,
+  .carriage-seat {
+    display: none;
+  }
+
+  /* Keep the real alpine daylight landscape visible inside the single mobile train window */
+  .train-panorama {
+    display: block;
+    border-radius: 28px;
+  }
+
+  .main-window {
+    position: relative;
+    border-radius: 28px;
+    padding: 28px 18px 24px;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+  }
+
+  .window-bezel {
+    border-width: 6px;
+  }
+
+  .window-bezel::before {
+    inset: -6px;
+    border-width: 6px;
+  }
+
+  .window-rubber-seal {
+    inset: 5px;
+    border-radius: calc(28px - 5px);
+    border-width: 4px;
+  }
+
+  .window-scrim {
+    background: radial-gradient(
+      84% 72% at 50% 48%,
+      rgba(244, 249, 255, 0.78) 0%,
+      rgba(240, 247, 253, 0.56) 54%,
+      rgba(235, 244, 252, 0.2) 86%,
+      transparent 100%
+    );
+  }
+
+  .signin-input,
+  .signin-btn-primary,
+  .signin-btn-google {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .signin-local-btn {
+    min-height: 44px;
+  }
+
+  .carriage-sill {
+    margin-top: 10px;
+    height: 10px;
+  }
+
+  .carriage-lower-panel {
+    height: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+}
