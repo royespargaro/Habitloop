@@ -2,6 +2,7 @@ export type ID = string;
 export type Status = 'active' | 'completed' | 'archived';
 export type TaskStatus = 'todo' | 'done' | 'skipped';
 export type Priority = 'high' | 'medium' | 'low';
+export type SyncStatus = 'local' | 'hydrating' | 'syncing' | 'synced' | 'offline' | 'error' | 'conflict';
 
 export interface LifeArea {
   id: ID;
@@ -19,6 +20,7 @@ export interface Goal {
   status: Status;
   createdAt: string;
 }
+
 export interface Project {
   id: ID;
   goalId: ID | null;
@@ -28,6 +30,7 @@ export interface Project {
   status: Status;
   createdAt: string;
 }
+
 export interface Task {
   id: ID;
   projectId: ID | null;
@@ -38,6 +41,7 @@ export interface Task {
   createdAt: string;
   completedAt: string | null;
 }
+
 export interface Habit {
   id: ID;
   name: string;
@@ -45,16 +49,19 @@ export interface Habit {
   active: boolean;
   createdAt: string;
 }
+
 export interface HabitLog {
   id: ID;
   habitId: ID;
   date: string;
   status: 'done' | 'skipped';
 }
+
 export interface DailyPlan {
   date: string;
   priorityTaskIds: ID[];
 }
+
 export interface DailyReview {
   date: string;
   wins: string;
@@ -62,6 +69,7 @@ export interface DailyReview {
   notes: string;
   energy: number;
 }
+
 export interface AppData {
   schemaVersion: 3;
   lifeAreas: LifeArea[];
@@ -73,6 +81,29 @@ export interface AppData {
   dailyPlans: DailyPlan[];
   dailyReviews: DailyReview[];
   updatedAt?: string;
+}
+
+export interface BackupEnvelope {
+  format: 'inpursuit-backup';
+  backupVersion: 1;
+  exportedAt: string;
+  data: AppData;
+}
+
+export interface WorkspaceSummary {
+  lifeAreas: number;
+  goals: number;
+  projects: number;
+  tasks: number;
+  habits: number;
+  habitLogs: number;
+  dailyReviews: number;
+  updatedAt?: string;
+}
+
+export interface SyncMeta {
+  pendingSync: boolean;
+  lastSyncedAt: string | null;
 }
 
 export interface BrainDumpPreview {

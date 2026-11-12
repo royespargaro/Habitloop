@@ -1,29 +1,96 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helpers
-    function isSignedIn() { return request.auth != null; }
-    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
-    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
-    
-    // User Master Gate
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-      
-      // Habits subcollection
-      match /habits/{habitId} {
-        allow read, write: if isOwner(userId) && isValidId(habitId);
-      }
-      
-      // Checks subcollection
-      match /checks/{monthKey} {
-        allow read, write: if isOwner(userId);
-      }
-    }
-    
-    // Default Deny
+    // Global default deny safety net
     match /{document=**} {
       allow read, write: if false;
+    }
+
+    // Core primitives
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Array type + non-empty element map guard (Pillar 5) + size cap
+    function isBoundedMapList(listVal, maxLen) {
+      return listVal is list
+        && listVal.size() <= maxLen
+        && (listVal.size() == 0 || listVal[0] is map);
+    }
+
+    // Validation blueprint matching firebase-blueprint.json UserWorkspace schema
+    function isValidUserWorkspace(data) {
+      let reqKeys = [
+        'schemaVersion',
+        'lifeAreas',
+        'goals',
+        'projects',
+        'tasks',
+        'habits',
+        'habitLogs',
+        'dailyPlans',
+        'dailyReviews'
+      ];
+      let allowedKeys = [
+        'schemaVersion',
+        'lifeAreas',
+        'goals',
+        'projects',
+        'tasks',
+        'habits',
+        'habitLogs',
+        'dailyPlans',
+        'dailyReviews',
+        'updatedAt'
+      ];
+      return data.keys().hasAll(reqKeys)
+        && data.keys().hasOnly(allowedKeys)
+        && data.schemaVersion is int
+        && data.schemaVersion == 3
+        && isBoundedMapList(data.lifeAreas, 50)
+        && isBoundedMapList(data.goals, 200)
+        && isBoundedMapList(data.projects, 200)
+        && isBoundedMapList(data.tasks, 1000)
+        && isBoundedMapList(data.habits, 100)
+        && isBoundedMapList(data.habitLogs, 10000)
+        && isBoundedMapList(data.dailyPlans, 1000)
+        && isBoundedMapList(data.dailyReviews, 1000)
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
+    // User workspace document: single-owner isolation, no collection listing, strict schema validation
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId)
+        && isVerified()
+        && isValidId(userId)
+        && isValidUserWorkspace(incoming());
+
+      allow update: if isOwner(userId)
+        && isVerified()
+        && isValidId(userId)
+        && isValidUserWorkspace(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'schemaVersion',
+          'lifeAreas',
+          'goals',
+          'projects',
+          'tasks',
+          'habits',
+          'habitLogs',
+          'dailyPlans',
+          'dailyReviews',
+          'updatedAt'
+        ]);
+
+      allow delete: if isOwner(userId)
+        && isVerified()
+        && isValidId(userId);
     }
   }
 }

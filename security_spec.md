@@ -1,27 +1,22 @@
-# Security Specification: HabitLoop
+# Security Specification: InPursuit
 
 ## 1. Data Invariants
-1. **User Data Isolation**: Every document path within `/users/{userId}/` MUST match the `request.auth.uid` of the authenticated user.
-2. **Path Integrity**: Path variables (e.g., `{userId}`, `{habitId}`, `{monthKey}`) MUST be validated to match the expected format (e.g., `isValidId()`).
-3. **Write Integrity**: Only the owner of a document can create, update, or delete it.
-4. **Schema Enforcement**: All document writes MUST match the schema defined in `firebase-blueprint.json` (keys, types, constraints).
-5. **PII Isolation**: (Future) User profile information in `/users/{userId}` is readable only by the owner.
+1. **User Data Isolation**: Only the authenticated user whose `request.auth.uid == userId` may `get`, `create`, `update`, or `delete` `/users/{userId}`. Collection listing (`allow list`) on `/users` is strictly disabled (`if false`).
+2. **Verified Identity**: All writes (`create`, `update`, `delete`) require `request.auth.token.email_verified == true`.
+3. **Path Integrity**: `{userId}` MUST satisfy `isValidId(userId)` (`<= 128` chars matching `^[a-zA-Z0-9_-]+$`).
+4. **Strict Schema Enforcement**: Every write to `/users/{userId}` MUST satisfy `isValidUserWorkspace(incoming())` (exact required keys, exact allowed keys via `hasOnly`, `schemaVersion == 3`, `list` types with bounded sizes, non-empty element map checks, and `updatedAt` string <= 40 chars).
+5. **Default Deny**: All other Firestore paths are denied via `match /{document=**} { allow read, write: if false; }`.
 
-## 2. The "Dirty Dozen" Payloads (Examples)
-1. **Cross-User Read**: Authenticated user 'A' attempts to `get()` path `/users/userB/habits/habit1`.
-2. **Cross-User Write**: Authenticated user 'A' attempts to `setDoc()` path `/users/userB/habits/habit1`.
-3. **Invalid ID Poisoning**: Attempt to write a habit with ID `../../../../poison`.
-4. **Schema Violation (Missing Required)**: Write a `Habit` document missing the `userId` field.
-5. **Schema Violation (Invalid Type)**: Write a `HabitCheck` where `days` is a string instead of an array.
-6. **Schema Violation (Excess Fields)**: Write a `Habit` with a `ghostField: true`.
-7. **Unauthorized Write**: Unauthenticated user attempts to write to `/users/userA/...`.
-8. **Invalid Month Key**: Write a `HabitCheck` with `monthKey: "2026-13"` (invalid month).
-9. **String Overflow**: Write a habit name with > 40 characters.
-10. **Modification of System Fields**: Attempt to update `habitId` of an existing `HabitCheck`.
-11. **Orphaned Write**: Create a `HabitCheck` with a `userId` that does not match the parent document's path.
-12. **Anonymous Write**: Authenticated user with `email_verified: false` attempts to write (if enforcement is required).
-
-## 3. Security Rules Test Runner (firestore.rules.test.ts)
-(To be implemented using `@firebase/rules-unit-testing`)
-- Setup: Use `initializeTestEnvironment` with a mock Firestore.
-- Tests: Assert `PERMISSION_DENIED` for all Dirty Dozen payloads.
+## 2. Adversarial Payloads Blocked by Rules
+1. **Cross-User Get**: Authenticated user `userA` attempts `get(/users/userB)` -> `PERMISSION_DENIED`.
+2. **Collection Enumeration**: Authenticated user attempts `list(/users)` -> `PERMISSION_DENIED`.
+3. **Cross-User Write**: Authenticated user `userA` attempts `setDoc(/users/userB, ...)` -> `PERMISSION_DENIED`.
+4. **Unauthenticated Access**: Anonymous/signed-out client attempts read or write -> `PERMISSION_DENIED`.
+5. **Unverified Email Write**: Authenticated user with `email_verified: false` attempts write -> `PERMISSION_DENIED`.
+6. **Ghost / Shadow Field Injection**: Write payload containing `role: "admin"` or `isAdmin: true` -> rejected by `hasOnly(allowedKeys)`.
+7. **Missing Required Field**: Write payload missing `dailyReviews` or `habits` -> rejected by `hasAll(reqKeys)`.
+8. **Invalid Schema Version**: Write payload with `schemaVersion: 2` or `schemaVersion: "3"` -> rejected by `schemaVersion is int && schemaVersion == 3`.
+9. **Array Type Spoofing**: Write payload where `tasks` is a string/map or `tasks[0]` is a primitive instead of a map -> rejected by `isBoundedMapList`.
+10. **Denial-of-Wallet Oversized List**: Write payload with `tasks.size() > 1000` or `goals.size() > 200` -> rejected by bounded size checks.
+11. **Malformed Timestamp Overflow**: Write payload with `updatedAt` longer than 40 characters or non-string -> rejected.
+12. **Legacy / Arbitrary Subcollection Write**: Attempt to write `/users/{userId}/habits/h1` or `/other/doc` -> rejected by default deny catch-all.

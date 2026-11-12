@@ -1,51 +1,70 @@
 {
   "entities": {
-    "User": {
-      "title": "User",
-      "description": "User profile information",
+    "UserWorkspace": {
+      "title": "UserWorkspace",
+      "description": "Synchronized InPursuit personal execution workspace for a single authenticated user",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "email": { "type": "string", "format": "email" }
+        "schemaVersion": {
+          "type": "integer",
+          "description": "Workspace schema version (must equal 3)"
+        },
+        "lifeAreas": {
+          "type": "array",
+          "description": "User life areas (max 50 items)"
+        },
+        "goals": {
+          "type": "array",
+          "description": "Long-term goals linked to life areas (max 200 items)"
+        },
+        "projects": {
+          "type": "array",
+          "description": "Projects linked to goals (max 200 items)"
+        },
+        "tasks": {
+          "type": "array",
+          "description": "Actionable tasks linked to projects (max 1000 items)"
+        },
+        "habits": {
+          "type": "array",
+          "description": "Repeatable habits with schedule frequency (max 100 items)"
+        },
+        "habitLogs": {
+          "type": "array",
+          "description": "Daily habit completion and skip logs (max 10000 items)"
+        },
+        "dailyPlans": {
+          "type": "array",
+          "description": "Top three daily priorities keyed by YYYY-MM-DD (max 1000 items)"
+        },
+        "dailyReviews": {
+          "type": "array",
+          "description": "Daily reflection entries keyed by YYYY-MM-DD (max 1000 items)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 40,
+          "description": "ISO-8601 timestamp of last modification"
+        }
       },
-      "required": ["uid", "email"]
-    },
-    "Habit": {
-      "title": "Habit",
-      "description": "A user's habit",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string", "maxLength": 40 },
-        "userId": { "type": "string" }
-      },
-      "required": ["id", "name", "userId"]
-    },
-    "HabitCheck": {
-      "title": "HabitCheck",
-      "description": "A checkmark for a habit on a specific day",
-      "type": "object",
-      "properties": {
-        "habitId": { "type": "string" },
-        "userId": { "type": "string" },
-        "monthKey": { "type": "string", "pattern": "^\\d{4}-\\d{1,2}$" },
-        "days": { "type": "array" }
-      },
-      "required": ["habitId", "userId", "monthKey", "days"]
+      "required": [
+        "schemaVersion",
+        "lifeAreas",
+        "goals",
+        "projects",
+        "tasks",
+        "habits",
+        "habitLogs",
+        "dailyPlans",
+        "dailyReviews"
+      ]
     }
   },
   "firestore": {
     "/users/{userId}": {
-      "schema": "User",
-      "description": "User profile collection"
-    },
-    "/users/{userId}/habits/{habitId}": {
-      "schema": "Habit",
-      "description": "Habits collection per user"
-    },
-    "/users/{userId}/checks/{monthKey}": {
-      "schema": "HabitCheck",
-      "description": "Checks collection per user per month"
+      "schema": "UserWorkspace",
+      "description": "Single-owner workspace document storing synchronized v3 execution data"
     }
   }
 }

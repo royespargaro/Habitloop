@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AlertCircle, ArrowRight, LoaderCircle } from 'lucide-react';
 import { useHabits } from '../context/HabitContext';
+import { getReadableAuthError } from '../utils/authErrors';
 import alpineLandscape from '../assets/images/alpine_meadow_sky_1794511898838.jpg';
 import './sign-in.css';
 
@@ -52,7 +53,7 @@ function GoogleMark() {
 }
 
 export function SignInPage({ onContinueLocal }: SignInPageProps) {
-  const { signIn } = useHabits();
+  const { signIn, authNotice } = useHabits();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
@@ -126,15 +127,7 @@ export function SignInPage({ onContinueLocal }: SignInPageProps) {
     try {
       await signIn();
     } catch (error) {
-      const code =
-        typeof error === 'object' && error !== null && 'code' in error
-          ? String((error as { code?: unknown }).code)
-          : '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-        setAuthError('Google sign-in was cancelled before completion.');
-      } else {
-        setAuthError(error instanceof Error ? error.message : 'Unable to sign in with Google right now.');
-      }
+      setAuthError(getReadableAuthError(error));
     } finally {
       setGoogleBusy(false);
     }
@@ -256,10 +249,10 @@ export function SignInPage({ onContinueLocal }: SignInPageProps) {
                 </div>
               )}
 
-              {authError && (
+              {(authError || authNotice) && (
                 <div className="signin-auth-error" role="alert">
                   <AlertCircle size={15} aria-hidden="true" />
-                  <span>{authError}</span>
+                  <span>{authError || authNotice}</span>
                 </div>
               )}
 
