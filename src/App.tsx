@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { BrainDumpModal } from './components/BrainDumpModal';
-import { ConfirmModal } from './components/ConfirmModal';
-import { ConflictModal } from './components/ConflictModal';
-import { FilmHeader } from './components/FilmHeader';
-import { SettingsModal } from './components/SettingsModal';
-import { SignInPage } from './components/SignInPage';
+import { FilmHeader, type HeroGoalSummary } from './components/FilmHeader';
 import { SyncIndicator } from './components/SyncIndicator';
 import { useHabits } from './context/HabitContext';
+
+const BrainDumpModal = lazy(() => import('./components/BrainDumpModal').then(m => ({ default: m.BrainDumpModal })));
+const ConfirmModal = lazy(() => import('./components/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const ConflictModal = lazy(() => import('./components/ConflictModal').then(m => ({ default: m.ConflictModal })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const SignInPage = lazy(() => import('./components/SignInPage').then(m => ({ default: m.SignInPage })));
 import {
   Activity, ArrowUpRight, CalendarDays, Check, CheckCircle2, ChevronLeft,
   ChevronRight, Flag, FolderKanban, Plus, Settings2, Sparkles, Target, Trash2, User, X,
@@ -140,21 +141,52 @@ export default function App() {
 
   const avatarPhotoUrl = user?.photoURL && user.photoURL !== failedPhotoUrl ? user.photoURL : null;
 
-  const todayPlan = data.dailyPlans.find(p => p.date === today) ?? { date: today, priorityTaskIds: [] };
-  const todayTasks = data.tasks.filter(t => t.dueDate === today && t.status !== 'skipped');
-  const overdueTasks = data.tasks.filter(t => t.status === 'todo' && t.dueDate !== '' && t.dueDate < today);
-  const activeHabits = data.habits.filter(h => h.active && isHabitScheduledOnDate(h, today));
-  const todayHabitLogMap = new Map(data.habitLogs.filter(l => l.date === today).map(l => [l.habitId, l.status]));
-  const completedHabitIds = new Set(activeHabits.filter(h => todayHabitLogMap.get(h.id) === 'done').map(h => h.id));
-  const skippedHabitIds = new Set(activeHabits.filter(h => todayHabitLogMap.get(h.id) === 'skipped').map(h => h.id));
+  const todayPlan = useMemo(
+    () => data.dailyPlans.find(p => p.date === today) ?? { date: today, priorityTaskIds: [] },
+    [data.dailyPlans, today],
+  );
+  const todayTasks = useMemo(
+    () => data.tasks.filter(t => t.dueDate === today && t.status !== 'skipped'),
+    [data.tasks, today],
+  );
+  const overdueTasks = useMemo(
+    () => data.tasks.filter(t => t.status === 'todo' && t.dueDate !== '' && t.dueDate < today),
+    [data.tasks, today],
+  );
+  const activeHabits = useMemo(
+    () => data.habits.filter(h => h.active && isHabitScheduledOnDate(h, today)),
+    [data.habits, today],
+  );
+  const todayHabitLogMap = useMemo(
+    () => new Map(data.habitLogs.filter(l => l.date === today).map(l => [l.habitId, l.status])),
+    [data.habitLogs, today],
+  );
+  const completedHabitIds = useMemo(
+    () => new Set(activeHabits.filter(h => todayHabitLogMap.get(h.id) === 'done').map(h => h.id)),
+    [activeHabits, todayHabitLogMap],
+  );
+  const skippedHabitIds = useMemo(
+    () => new Set(activeHabits.filter(h => todayHabitLogMap.get(h.id) === 'skipped').map(h => h.id)),
+    [activeHabits, todayHabitLogMap],
+  );
   const doneHabits = completedHabitIds.size;
-  const scheduledNonSkippedHabits = activeHabits.filter(h => !skippedHabitIds.has(h.id)).length;
-  const completedToday = todayTasks.filter(t => t.status === 'done').length;
-  const priorityTasks = todayPlan.priorityTaskIds
-    .map(id => data.tasks.find(t => t.id === id))
-    .filter((t): t is Task => !!t && t.status !== 'skipped');
-  const activeGoals = data.goals.filter(g => g.status === 'active');
-  const activeProjects = data.projects.filter(p => p.status === 'active');
+  const scheduledNonSkippedHabits = useMemo(
+    () => activeHabits.filter(h => !skippedHabitIds.has(h.id)).length,
+    [activeHabits, skippedHabitIds],
+  );
+  const completedToday = useMemo(
+    () => todayTasks.filter(t => t.status === 'done').length,
+    [todayTasks],
+  );
+  const priorityTasks = useMemo(
+    () =>
+      todayPlan.priorityTaskIds
+        .map(id => data.tasks.find(t => t.id === id))
+        .filter((t): t is Task => !!t && t.status !== 'skipped'),
+    [data.tasks, todayPlan.priorityTaskIds],
+  );
+  const activeGoals = useMemo(() => data.goals.filter(g => g.status === 'active'), [data.goals]);
+  const activeProjects = useMemo(() => data.projects.filter(p => p.status === 'active'), [data.projects]);
   const totalActionsDenominator = scheduledNonSkippedHabits + todayTasks.length;
   const completion = totalActionsDenominator === 0 ? 0 : Math.round(((doneHabits + completedToday) / totalActionsDenominator) * 100);
 
@@ -406,12 +438,22 @@ export default function App() {
 
   if (!user && !localWorkspaceActive) {
     return (
-      <SignInPage
-        onContinueLocal={() => {
-          writeLocalModeFlag(true);
-          setLocalWorkspaceActive(true);
-        }}
-      />
+      <Suspense
+        fallback={(
+          <div className="auth-boot-shell" aria-busy="true">
+            <div className="auth-boot-mark">
+              <img className="brand-mark" src="/inpursuit-mark.svg" alt="InPursuit" />
+            </div>
+          </div>
+        )}
+      >
+        <SignInPage
+          onContinueLocal={() => {
+            writeLocalModeFlag(true);
+            setLocalWorkspaceActive(true);
+          }}
+        />
+      </Suspense>
     );
   }
 
@@ -534,6 +576,9 @@ export default function App() {
               onAddTask={() => openModal('task')}
               onEditTask={id => openModal('task', id)}
               onReview={() => openModal('review', undefined, today)}
+              onOpenGoals={() => setView('goals')}
+              onEditGoal={id => openModal('goal', id)}
+              onAddGoal={() => openModal('goal')}
             />
           )}
           {view === 'goals' && (
@@ -660,70 +705,72 @@ export default function App() {
         />
       )}
 
-      {modal === 'settings' && (
-        <SettingsModal
-          onClose={closeModal}
-          onExportBackup={() => exportData(data)}
-          onRestoreBackup={() => importRef.current?.click()}
-          onOpenSignIn={() => {
-            writeLocalModeFlag(false);
-            setLocalWorkspaceActive(false);
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {modal === 'settings' && (
+          <SettingsModal
+            onClose={closeModal}
+            onExportBackup={() => exportData(data)}
+            onRestoreBackup={() => importRef.current?.click()}
+            onOpenSignIn={() => {
+              writeLocalModeFlag(false);
+              setLocalWorkspaceActive(false);
+            }}
+          />
+        )}
 
-      {deleteTarget && (
-        <ConfirmModal
-          eyebrow={`delete ${deleteTarget.kind}`}
-          title={`Delete "${deleteTarget.title}"?`}
-          body={
-            deleteTarget.kind === 'goal'
-              ? 'Linked projects will be unlinked (kept intact). This cannot be undone.'
-              : deleteTarget.kind === 'project'
-                ? 'Linked tasks will become personal/unassigned tasks. This cannot be undone.'
-                : deleteTarget.kind === 'habit'
-                  ? 'All historical completion logs for this habit will also be removed.'
-                  : 'This task will be removed from your workspace and any daily plans.'
-          }
-          confirmLabel={`Delete ${deleteTarget.kind}`}
-          tone="danger"
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      )}
+        {deleteTarget && (
+          <ConfirmModal
+            eyebrow={`delete ${deleteTarget.kind}`}
+            title={`Delete "${deleteTarget.title}"?`}
+            body={
+              deleteTarget.kind === 'goal'
+                ? 'Linked projects will be unlinked (kept intact). This cannot be undone.'
+                : deleteTarget.kind === 'project'
+                  ? 'Linked tasks will become personal/unassigned tasks. This cannot be undone.'
+                  : deleteTarget.kind === 'habit'
+                    ? 'All historical completion logs for this habit will also be removed.'
+                    : 'This task will be removed from your workspace and any daily plans.'
+            }
+            confirmLabel={`Delete ${deleteTarget.kind}`}
+            tone="danger"
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleteTarget(null)}
+          />
+        )}
 
-      {pendingRestore && (
-        <ConfirmModal
-          eyebrow="restore backup"
-          title="Replace current workspace with backup?"
-          body={
-            pendingRestore.exportedAt
-              ? `Backup exported on ${new Date(pendingRestore.exportedAt).toLocaleString()}. Continuing will replace your current workspace.`
-              : 'Continuing will replace your current workspace with this backup file.'
-          }
-          details={[
-            `${pendingRestore.summary.goals} goals · ${pendingRestore.summary.projects} projects · ${pendingRestore.summary.tasks} tasks`,
-            `${pendingRestore.summary.habits} habits · ${pendingRestore.summary.habitLogs} logs · ${pendingRestore.summary.dailyReviews} reviews`,
-          ]}
-          confirmLabel="Restore backup"
-          tone="solid"
-          onConfirm={confirmRestoreBackup}
-          onCancel={() => setPendingRestore(null)}
-        />
-      )}
+        {pendingRestore && (
+          <ConfirmModal
+            eyebrow="restore backup"
+            title="Replace current workspace with backup?"
+            body={
+              pendingRestore.exportedAt
+                ? `Backup exported on ${new Date(pendingRestore.exportedAt).toLocaleString()}. Continuing will replace your current workspace.`
+                : 'Continuing will replace your current workspace with this backup file.'
+            }
+            details={[
+              `${pendingRestore.summary.goals} goals · ${pendingRestore.summary.projects} projects · ${pendingRestore.summary.tasks} tasks`,
+              `${pendingRestore.summary.habits} habits · ${pendingRestore.summary.habitLogs} logs · ${pendingRestore.summary.dailyReviews} reviews`,
+            ]}
+            confirmLabel="Restore backup"
+            tone="solid"
+            onConfirm={confirmRestoreBackup}
+            onCancel={() => setPendingRestore(null)}
+          />
+        )}
 
-      {conflict && <ConflictModal conflict={conflict} onResolve={resolveConflict} />}
+        {conflict && <ConflictModal conflict={conflict} onResolve={resolveConflict} />}
+
+        {brainDumpOpen && (
+          <BrainDumpModal
+            existingData={data}
+            onClose={() => setBrainDumpOpen(false)}
+            onImport={importBrainDump}
+          />
+        )}
+      </Suspense>
 
       {toast && <div className="toast" role="status"><CheckCircle2 size={16} />{toast}</div>}
       {storageNotice && <div className="storage-warning" role="status">{storageNotice}</div>}
-
-      {brainDumpOpen && (
-        <BrainDumpModal
-          existingData={data}
-          onClose={() => setBrainDumpOpen(false)}
-          onImport={importBrainDump}
-        />
-      )}
     </div>
   );
 }
@@ -732,6 +779,7 @@ function TodayView({
   data, today, todayTasks, overdueTasks, activeHabits, completedHabitIds, skippedHabitIds, doneHabits, scheduledHabitsCount,
   priorityTasks, priorityIds, completion, completedToday,
   onToggleHabit, onToggleSkipHabit, onToggleTask, onMoveToToday, onPriorities, onAddTask, onEditTask, onReview,
+  onOpenGoals, onEditGoal, onAddGoal,
 }: {
   data: AppData; today: string; todayTasks: Task[]; overdueTasks: Task[]; activeHabits: Habit[];
   completedHabitIds: Set<string>; skippedHabitIds: Set<string>; doneHabits: number; scheduledHabitsCount: number;
@@ -739,6 +787,7 @@ function TodayView({
   onToggleHabit: (h: Habit) => void; onToggleSkipHabit: (h: Habit) => void;
   onToggleTask: (t: Task) => void; onMoveToToday: (id: string) => void;
   onPriorities: (ids: string[]) => void; onAddTask: () => void; onEditTask: (id: string) => void; onReview: () => void;
+  onOpenGoals: () => void; onEditGoal: (id: string) => void; onAddGoal: () => void;
 }) {
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [taskSearch, setTaskSearch] = useState('');
@@ -749,6 +798,32 @@ function TodayView({
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const projectName = (id: string | null) => data.projects.find(p => p.id === id)?.title ?? 'Personal';
 
+  const heroGoals: HeroGoalSummary[] = useMemo(
+    () =>
+      [...data.goals]
+        .filter(g => g.status === 'active')
+        .sort((a, b) => {
+          if (a.targetDate && b.targetDate) return a.targetDate.localeCompare(b.targetDate);
+          if (a.targetDate) return -1;
+          if (b.targetDate) return 1;
+          return a.createdAt.localeCompare(b.createdAt);
+        })
+        .map(goal => {
+          const progress = getGoalProgress(goal, data.projects, data.tasks);
+          const areaName = data.lifeAreas.find(a => a.id === goal.lifeAreaId)?.name ?? 'Direction';
+          return {
+            id: goal.id,
+            title: goal.title,
+            areaName,
+            percent: progress.percent,
+            completedTasks: progress.completedTasks,
+            totalTasks: progress.totalTasks,
+            targetDate: goal.targetDate,
+          };
+        }),
+    [data.goals, data.lifeAreas, data.projects, data.tasks],
+  );
+
   return (
     <div className="view-stack">
       <FilmHeader
@@ -756,8 +831,12 @@ function TodayView({
         title={greeting.toLowerCase()}
         subtitle="Choose what matters. Then do the work."
         scene={`daily overview · take ${today}`}
+        goals={heroGoals}
         onReview={onReview}
         onAddTask={onAddTask}
+        onOpenGoals={onOpenGoals}
+        onOpenGoal={onEditGoal}
+        onAddGoal={onAddGoal}
       />
 
       <div className="stat-grid">
@@ -1190,20 +1269,49 @@ function HabitsView({
   onAdd: () => void; onEdit: (id: string) => void; onDelete: (id: string, title: string) => void;
   onToggle: (h: Habit, date: string) => void;
 }) {
-  const now = new Date(`${today}T12:00:00`);
+  const now = useMemo(() => new Date(`${today}T12:00:00`), [today]);
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
   const days = new Date(year, month + 1, 0).getDate();
   const monthName = new Date(year, month, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-  const monthLogs = logs.filter(l => l.date.startsWith(monthPrefix) && l.status === 'done');
-  const monthLogStatusMap = new Map(logs.filter(l => l.date.startsWith(monthPrefix)).map(log => [`${log.habitId}:${log.date}`, log.status]));
+  const { monthDoneCount, monthLogStatusMap } = useMemo(() => {
+    let doneCount = 0;
+    const statusMap = new Map<string, 'done' | 'skipped'>();
+    for (const log of logs) {
+      if (!log.date.startsWith(monthPrefix)) continue;
+      if (log.status === 'done') doneCount += 1;
+      statusMap.set(`${log.habitId}:${log.date}`, log.status);
+    }
+    return { monthDoneCount: doneCount, monthLogStatusMap: statusMap };
+  }, [logs, monthPrefix]);
 
-  const activeHabitsList = habits.filter(h => h.active);
-  const completedToday = activeHabitsList.filter(habit => completedHabitIds.has(habit.id)).length;
-  const consistency30d = activeHabitsList.length
-    ? Math.round(activeHabitsList.reduce((sum, h) => sum + getHabitConsistency(h, logs, 30, now).rate, 0) / activeHabitsList.length)
-    : 0;
+  const activeHabitsList = useMemo(() => habits.filter(h => h.active), [habits]);
+  const completedToday = useMemo(
+    () => activeHabitsList.filter(habit => completedHabitIds.has(habit.id)).length,
+    [activeHabitsList, completedHabitIds],
+  );
+  const habitStatsMap = useMemo(
+    () =>
+      new Map(
+        habits.map(h => [
+          h.id,
+          {
+            streak: getStreak(h.id, logs, now),
+            best: getBestStreak(h.id, logs),
+            rate: getHabitConsistency(h, logs, 30, now).rate,
+          },
+        ]),
+      ),
+    [habits, logs, now],
+  );
+  const consistency30d = useMemo(
+    () =>
+      activeHabitsList.length
+        ? Math.round(activeHabitsList.reduce((sum, h) => sum + (habitStatsMap.get(h.id)?.rate ?? 0), 0) / activeHabitsList.length)
+        : 0,
+    [activeHabitsList, habitStatsMap],
+  );
 
   const moveMonth = (direction: number) => {
     const d = new Date(year, month + direction, 1);
@@ -1221,7 +1329,7 @@ function HabitsView({
       <div className="habit-summary">
         <div><span>Active habits</span><b>{activeHabitsList.length}</b></div>
         <div><span>30-day adherence</span><b>{consistency30d}%</b></div>
-        <div><span>This month · Today</span><b>{monthLogs.length} · {completedToday}/{activeHabitsList.length}</b></div>
+        <div><span>This month · Today</span><b>{monthDoneCount} · {completedToday}/{activeHabitsList.length}</b></div>
       </div>
 
       <section className="panel habit-matrix-panel">
@@ -1258,9 +1366,7 @@ function HabitsView({
               </thead>
               <tbody>
                 {habits.map(h => {
-                  const streak = getStreak(h.id, logs, now);
-                  const best = getBestStreak(h.id, logs);
-                  const consistency = getHabitConsistency(h, logs, 30, now);
+                  const stats = habitStatsMap.get(h.id) ?? { streak: 0, best: 0, rate: 0 };
                   return (
                     <tr key={h.id}>
                       <td className="habit-name-cell">
@@ -1269,7 +1375,7 @@ function HabitsView({
                           <div className="habit-name-meta">
                             <button type="button" onClick={() => onEdit(h.id)}>{h.name}</button>
                             <small className="habit-submeta">
-                              {h.frequency} · {streak}d (best {best}d) · {consistency.rate}%
+                              {h.frequency} · {stats.streak}d (best {stats.best}d) · {stats.rate}%
                             </small>
                           </div>
                           <button type="button" className="delete-mini" aria-label={`Delete habit ${h.name}`} onClick={() => onDelete(h.id, h.name)}>
@@ -1321,11 +1427,17 @@ function HabitsView({
 }
 
 function ReviewView({ data, today, onWrite }: { data: AppData; today: string; onWrite: (date?: string) => void }) {
-  const now = new Date(`${today}T12:00:00`);
-  const summary = getWeeklyReflectionSummary(data, today, now);
-  const recordedReviews = [...data.dailyReviews]
-    .filter(r => Boolean(r.wins.trim() || r.blockers.trim() || r.notes.trim()))
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const summary = useMemo(() => {
+    const now = new Date(`${today}T12:00:00`);
+    return getWeeklyReflectionSummary(data, today, now);
+  }, [data, today]);
+  const recordedReviews = useMemo(
+    () =>
+      [...data.dailyReviews]
+        .filter(r => Boolean(r.wins.trim() || r.blockers.trim() || r.notes.trim()))
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    [data.dailyReviews],
+  );
   const latestReview = recordedReviews[0];
 
   return (

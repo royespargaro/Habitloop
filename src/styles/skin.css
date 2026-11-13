@@ -4,7 +4,7 @@
   --sk-ui:'Instrument Sans','Inter Tight','Helvetica Neue',Arial,sans-serif;
   --sk-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
   --sk-lime:#d4ff3a;--sk-r:30px;
-  --sk-glass:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02) 42%,rgba(0,0,0,.28)),rgba(10,10,12,.58);
+  --sk-glass:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.018) 42%,rgba(0,0,0,.35)),rgba(13,14,17,.9);
   --sk-ring:linear-gradient(150deg,rgba(255,255,255,.36),rgba(255,255,255,.05) 34%,rgba(255,255,255,0) 60%,rgba(255,106,0,.3));
   --sk-fade:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
   font-family:var(--sk-ui)}
@@ -13,11 +13,10 @@ body{font-family:var(--sk-ui)}
 .stat-value{font-weight:700}
 .eyebrow,.side-label,.date-chip,.breadcrumbs,.count-pill,.tag-label,.status-label,.priority-tag,.review-label,.active-project-count,.brain-dump-count,.brain-dump-preview-head p,.brain-dump-section h3 span{font-family:var(--sk-mono)}
 
-/* seamless glass surfaces: no hard border, fading gradient rim, soft depth */
+/* seamless glass surfaces: no hard border, fading gradient rim, light GPU footprint */
 .panel,.stat-card,.goal-card,.project-card,.habit-summary,.review-metric,.review-prompt,.focus-card{
   position:relative;border:0;border-radius:var(--sk-r);background:var(--sk-glass);
-  -webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);
-  box-shadow:0 34px 70px -38px rgba(0,0,0,.95),0 0 90px -55px rgba(255,106,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}
+  box-shadow:0 20px 44px -26px rgba(0,0,0,.92),0 0 48px -36px rgba(255,106,0,.3),inset 0 1px 0 rgba(255,255,255,.08)}
 .panel::before,.stat-card::before,.goal-card::before,.project-card::before,.habit-summary::before,.review-metric::before,.review-prompt::before,.focus-card::before,.sidebar::before{
   content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:var(--sk-ring);pointer-events:none;z-index:3;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
@@ -29,7 +28,7 @@ body{font-family:var(--sk-ui)}
   .panel::before,.stat-card::before,.goal-card::before,.project-card::before,.habit-summary::before,.review-metric::before,.review-prompt::before,.focus-card::before,.sidebar::before,.fh-root::after{corner-shape:inherit}
 }
 .focus-card{--sk-r:22px}
-.modal{border:0;border-radius:34px;background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.02)),rgba(10,10,12,.86);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 40px 120px rgba(0,0,0,.85)}
+.modal{border:0;border-radius:34px;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),rgba(11,11,14,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 24px 60px rgba(0,0,0,.85)}
 @media(min-width:768px){
   @supports (corner-shape:squircle){
     .modal{corner-shape:squircle;border-radius:46px}
@@ -46,10 +45,10 @@ body{font-family:var(--sk-ui)}
 
 /* floating sidebar island */
 @media(min-width:768px){
-  .sidebar{inset:14px auto 14px 14px;width:244px;border:0;border-radius:calc(var(--sk-r)*1.2);padding:24px 14px 16px;background:var(--sk-glass);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 40px 90px -40px #000,inset 0 1px 0 rgba(255,255,255,.08)}
+  .sidebar{inset:14px auto 14px 14px;width:244px;border:0;border-radius:calc(var(--sk-r)*1.2);padding:24px 14px 16px;background:var(--sk-glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 24px 56px -28px #000,inset 0 1px 0 rgba(255,255,255,.08)}
   .main-area{margin-left:272px}
 }
-.topbar{background:linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.3))}
+.topbar{background:linear-gradient(180deg,rgba(9,10,11,.88),rgba(9,10,11,.68));-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .nav-item{border-radius:999px;padding:10px 14px;font-size:14px;color:#b9bec7}
 .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
 .nav-item.active{background:linear-gradient(90deg,rgba(212,255,58,.2),rgba(212,255,58,.04));color:var(--sk-lime);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
@@ -88,7 +87,7 @@ body{font-family:var(--sk-ui)}
 .progress-track,.stat-mini{border-radius:999px;background:rgba(255,255,255,.08)}
 .progress-track i,.stat-mini span{border-radius:999px;background:linear-gradient(90deg,#ff6a00,#ffd9a0)}
 .toast{border-radius:999px;padding:12px 18px}
-.storage-warning{border:0;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(245,158,11,.4),0 24px 60px rgba(0,0,0,.75);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.storage-warning{border:0;border-radius:20px;background:rgba(16,14,11,.94);box-shadow:inset 0 0 0 1px rgba(245,158,11,.4),0 18px 40px rgba(0,0,0,.72)}
 
 /* brain dump & settings modals: seamless cards and glass surfaces */
 .brain-dump-privacy{border:0;border-radius:18px;background:rgba(255,106,0,.08);box-shadow:inset 0 0 0 1px rgba(255,106,0,.24)}
@@ -104,6 +103,8 @@ body{font-family:var(--sk-ui)}
 .settings-error{margin:0;color:#ff9a8b;font-size:12px;line-height:1.45}
 
 @media(max-width:767px){
+  .topbar{background:rgba(9,10,11,.95);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .modal{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(12,13,16,.97)}
   .search-input,.field input,.field textarea,.field select{font-size:16px}
   .content-wrap{padding-bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   .modal{border-radius:30px 30px 0 0}
@@ -112,8 +113,8 @@ body{font-family:var(--sk-ui)}
   .mobile-nav{
     left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));
     width:auto;border:0;border-radius:30px;padding:7px 8px;height:68px;
-    background:var(--sk-glass);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
-    box-shadow:0 20px 50px -10px #000,inset 0 1px 0 rgba(255,255,255,.1)
+    background:rgba(13,14,18,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    box-shadow:0 16px 36px -10px #000,inset 0 1px 0 rgba(255,255,255,.1)
   }
   .mobile-nav::before{
     content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;background:var(--sk-ring);pointer-events:none;z-index:1;

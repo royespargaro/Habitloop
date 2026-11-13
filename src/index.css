@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root{font-family:'DM Sans',sans-serif;color:#f4f4f1;background:#090a0b;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;color-scheme:dark;font-optical-sizing:auto}
+:root{font-family:'Instrument Sans',system-ui,sans-serif;color:#f4f4f1;background:#090a0b;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;min-width:320px;min-height:100vh;background:#090a0b;color:#f4f4f1}
 button,input,textarea,select{font:inherit}
@@ -33,7 +32,7 @@ button:disabled{cursor:not-allowed;opacity:.4}
 .local-note{border-top:1px solid #222522;padding:16px 5px 0;color:#747b71;font-size:10px;display:flex;align-items:center;gap:8px}
 .status-dot{width:6px;height:6px;background:#a6d95a;border-radius:50%;display:inline-block;box-shadow:0 0 9px #9cc84d}
 .main-area{margin-left:246px;min-height:100vh}
-.topbar{height:67px;border-bottom:1px solid #222522;display:flex;align-items:center;justify-content:space-between;padding:0 42px;position:sticky;top:0;background:rgba(9,10,11,.88);backdrop-filter:blur(16px);z-index:10}
+.topbar{height:67px;border-bottom:1px solid #222522;display:flex;align-items:center;justify-content:space-between;padding:0 42px;position:sticky;top:0;background:rgba(9,10,11,.9);z-index:10}
 .breadcrumbs{display:flex;align-items:center;gap:9px;color:#73796f;font:11px 'DM Mono';text-transform:uppercase;letter-spacing:.6px}
 .breadcrumbs strong{color:#d8ddd2;font-weight:400}
 .topbar-right{display:flex;align-items:center;gap:17px}

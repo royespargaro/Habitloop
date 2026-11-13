@@ -22,6 +22,7 @@ function TrainPanorama() {
         src={alpineLandscape}
         alt=""
         className="panorama-img"
+        decoding="async"
         referrerPolicy="no-referrer"
       />
       <div className="panorama-atmosphere" />
